@@ -28,6 +28,12 @@ function injectPhishShieldBlock(url, risk, reason) {
   overlay.style.padding = "40px";
 
   overlay.innerHTML = `
+    <style>
+      @keyframes ps-pulse {
+        0% { opacity: 0.4; transform: scale(0.9); }
+        100% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 12px #e24b4a; }
+      }
+    </style>
     <div style="max-width: 600px; padding: 60px; border: 2px solid #e24b4a; border-radius: 24px; background: rgba(226, 75, 74, 0.05); box-shadow: 0 0 100px rgba(226, 75, 74, 0.1);">
       <div style="font-size: 80px; margin-bottom: 24px;">🛡️</div>
       <h1 style="font-size: 32px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.02em; margin-bottom: 16px; color: #e24b4a;">PhishShield+ Intercept</h1>
@@ -55,13 +61,21 @@ function injectPhishShieldBlock(url, risk, reason) {
            SAFE RETURN (EXIT SITE)
          </button>
          
+         <div style="background: rgba(226, 75, 74, 0.1); border: 1px solid #e24b4a; padding: 16px 28px; border-radius: 12px; text-align: center; box-shadow: 0 0 20px rgba(226, 75, 74, 0.2);">
+           <div style="font-size: 14px; font-weight: 800; color: #e24b4a; text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; justify-content: center; gap: 8px;">
+             <span style="display:inline-block; width:10px; height:10px; background:#e24b4a; border-radius:50%; animation: ps-pulse 0.8s infinite alternate;"></span>
+             AUTONOMOUS POISON PILL DEPLOYED
+           </div>
+           <div style="font-size: 12px; color: #d1d5db; margin-top: 8px;">Flooding attacker database with synthetic identities...</div>
+         </div>
+         
          <button 
            id="phishshield-offensive-btn"
-           style="background: #e24b4a; color: white; border: none; padding: 16px 28px; border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.1em; box-shadow: 0 4px 20px rgba(226, 75, 74, 0.4);"
-           onmouseover="this.style.transform='scale(1.02)'; this.style.background='#ff4d4d';"
-           onmouseout="this.style.transform='scale(1)'; this.style.background='#e24b4a';"
+           style="background: transparent; color: white; border: 1px solid #e24b4a; padding: 14px 28px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.05em;"
+           onmouseover="this.style.background='rgba(226, 75, 74, 0.1)';"
+           onmouseout="this.style.background='transparent';"
          >
-           ⚡ ENGAGE OFFENSIVE RETALIATION
+           VIEW LIVE SOC DASHBOARD
          </button>
 
          <button 

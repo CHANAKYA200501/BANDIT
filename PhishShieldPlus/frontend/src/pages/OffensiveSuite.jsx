@@ -53,7 +53,7 @@ export default function OffensiveSuite() {
   const isCurrentlyInjected = poisonLogs.length > 0 && poisonLogs[0].status === 'injecting';
 
   return (
-    <div className="flex-1 flex flex-col p-8 overflow-hidden bg-gradient-to-br from-red-500/[0.03] to-transparent w-full h-full">
+    <div className="flex-1 flex flex-col p-8 overflow-y-auto bg-gradient-to-br from-red-500/[0.03] to-transparent w-full h-full custom-scrollbar">
       <header className="mb-8 flex justify-between items-start">
         <div className="flex items-center gap-6">
           <div className="p-4 glass-card rounded-3xl text-red-500 shadow-[0_0_20px_rgba(255,100,100,0.1)]">
@@ -85,7 +85,7 @@ export default function OffensiveSuite() {
         </div>
       </header>
 
-      <div className="flex-1 gap-8 grid grid-cols-12 overflow-hidden">
+      <div className="flex-1 gap-8 grid grid-cols-12 min-h-[500px]">
         {/* Terminal Section */}
         <div className="col-span-8 flex flex-col glass-card rounded-[32px] overflow-hidden border-red-500/10 transition-all duration-700">
           <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">

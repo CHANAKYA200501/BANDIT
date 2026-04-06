@@ -14,8 +14,9 @@ class ThreatIntelligence:
         self.shodan_key = os.getenv("SHODAN_API_KEY")
         self.urlscan_key = os.getenv("URLSCAN_API_KEY")
 
-        # Mock fallbacks
-        self.mock_vt = {"malicious": 0, "suspicious": 1, "harmless": 50}
+        # Deterministic hash helper
+    def _deterministic_seed(self, url: str) -> int:
+        return int(hashlib.sha256(url.encode()).hexdigest(), 16)
 
     async def _async_mock_get(self, name, fallback_val, delay=0.5):
         await asyncio.sleep(delay)
@@ -23,7 +24,10 @@ class ThreatIntelligence:
 
     async def check_virustotal(self, url):
         if not self.vt_key or "mock" in self.vt_key:
-            return await self._async_mock_get("VirusTotal", self.mock_vt)
+            h = self._deterministic_seed(url)
+            malicious = (h % 15) if (h % 100) > 60 else 0
+            if "evil" in url or "phish" in url: malicious = 45
+            return await self._async_mock_get("VirusTotal", {"malicious": malicious, "suspicious": h % 5, "harmless": (h % 50) + 10})
         
         url_id = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
         endpoint = f"https://www.virustotal.com/api/v3/urls/{url_id}"
@@ -39,9 +43,11 @@ class ThreatIntelligence:
         except Exception:
             return self.mock_vt
 
-    async def check_abuseipdb(self, ip):
+    async def check_abuseipdb(self, ip, url=""):
         if not self.abuse_key or "mock" in self.abuse_key:
-            return await self._async_mock_get("AbuseIPDB", {"confidence_score": 5})
+            h = self._deterministic_seed(url or ip)
+            score = (h % 100) if (h % 10) > 7 else 0
+            return await self._async_mock_get("AbuseIPDB", {"confidence_score": score})
 
         endpoint = "https://api.abuseipdb.com/api/v2/check"
         headers = {"Key": self.abuse_key, "Accept": "application/json"}
@@ -97,11 +103,17 @@ class ThreatIntelligence:
             return {"screenshot_url": "mock_screenshot_url", "dom_hash": "a1b2c3d4"}
 
     async def whois_lookup(self, domain):
-        # Local heuristic fallback
-        return await self._async_mock_get("WHOIS", {"domain_age_days": 14 if ".xyz" in domain else 365})
+        h = self._deterministic_seed(domain)
+        suspicious_tlds = ['.xyz', '.cc', '.pw', '.top', '.ru']
+        age = (h % 30) if any(t in domain for t in suspicious_tlds) else (h % 300) + 365
+        if "evil" in domain or "phish" in domain: age = 5
+        return await self._async_mock_get("WHOIS", {"domain_age_days": age})
 
     async def ssl_certificate_check(self, domain):
-        return await self._async_mock_get("SSL", {"grade": "C" if ".pw" in domain else "A", "is_self_signed": False})
+        h = self._deterministic_seed(domain)
+        suspicious_tlds = ['.xyz', '.cc', '.pw', '.top', '.ru']
+        grade = "C" if any(t in domain for t in suspicious_tlds) else ["A", "A+", "B"][h % 3]
+        return await self._async_mock_get("SSL", {"grade": grade, "is_self_signed": (h % 15) == 0})
 
     async def check_hibp(self, email):
         sha1 = hashlib.sha1(email.encode('utf-8')).hexdigest().upper()
@@ -132,7 +144,7 @@ class ThreatIntelligence:
             self.ssl_certificate_check(domain),
             self.check_virustotal(url),
             self.check_google_safe_browsing(url),
-            self.check_abuseipdb(ip),
+            self.check_abuseipdb(ip, url=url),
             self.check_shodan(ip),
             self.check_urlscan(url)
         )

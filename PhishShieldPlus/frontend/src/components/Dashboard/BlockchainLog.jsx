@@ -7,7 +7,7 @@ export default function BlockchainLog({ fullView = false }) {
   const chainEvents = useThreatStore((state) => state.chainEvents);
 
   return (
-    <div className={`flex flex-col gap-4 ${fullView ? 'h-full' : 'mt-6'}`}>
+    <div className={`flex flex-col gap-4 ${fullView ? 'flex-1' : 'mt-6'}`}>
       {!fullView && (
         <div className="flex items-center justify-between px-1">
           <h2 className="text-sm text-accent-primary font-black uppercase tracking-[0.2em] flex items-center gap-3">
@@ -40,7 +40,7 @@ export default function BlockchainLog({ fullView = false }) {
                   </td>
                 </tr>
               ) : (
-                chainEvents.slice(0, 10).map((ev, idx) => (
+                (fullView ? chainEvents : chainEvents.slice(0, 10)).map((ev, idx) => (
                   <motion.tr 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}

@@ -4,7 +4,7 @@ import { Database, ShieldCheck, Link2, Clock } from 'lucide-react';
 
 export default function AuditLedger() {
   return (
-    <div className="flex-1 flex flex-col p-6 w-full h-full overflow-hidden">
+    <div className="flex-1 flex flex-col p-6 w-full h-full overflow-y-auto custom-scrollbar">
       <header className="mb-6 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-outfit font-bold text-white flex items-center gap-3">
@@ -23,9 +23,9 @@ export default function AuditLedger() {
         </div>
       </header>
 
-      <div className="flex-1 bg-panelBg/40 border border-gray-800 rounded-2xl p-6 overflow-hidden flex flex-col shadow-2xl relative group">
+      <div className="flex-1 bg-panelBg/40 border border-gray-800 rounded-2xl p-6 flex flex-col shadow-2xl relative group min-h-max">
         <div className="absolute top-0 right-0 w-64 h-64 bg-neonTeal/5 rounded-full blur-[100px] pointer-events-none group-hover:bg-neonTeal/10 transition-all duration-700"></div>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1">
           <BlockchainLog fullView={true} />
         </div>
       </div>

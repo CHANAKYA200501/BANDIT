@@ -18,12 +18,14 @@ export default function OpsCenter() {
       {/* 3D Globe Background */}
       <div className="absolute inset-0 z-0 pointer-events-auto">
         <Canvas camera={{ position: [0, 0, 7], fov: 60 }}>
-          <ambientLight intensity={0.5} />
-          <pointLight position={[10, 10, 10]} />
+          <ambientLight intensity={1.2} />
+          <pointLight position={[10, 10, 10]} intensity={1.5} />
+          <pointLight position={[-10, -10, -10]} intensity={2} color="#66fcf1" />
+          <directionalLight position={[0, 0, 8]} intensity={1} />
           <Stars radius={100} depth={50} count={3000} factor={3} saturation={0} fade speed={0.5} />
           <Globe threats={liveThreats} />
           <NeuralShield />
-          <OrbitControls autoRotate enableZoom={false} autoRotateSpeed={0.4} />
+          <OrbitControls autoRotate enableZoom={false} enablePan={false} zoomSpeed={0} autoRotateSpeed={0.4} />
         </Canvas>
       </div>
 

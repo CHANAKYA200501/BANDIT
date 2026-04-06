@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import socketio
 import os
@@ -472,7 +472,7 @@ async def connect(sid, environ):
         db.close()
 
 @app.websocket("/ws/monitor")
-async def websocket_monitor(websocket):
+async def websocket_monitor(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
@@ -480,11 +480,19 @@ async def websocket_monitor(websocket):
             db = next(get_db())
             try:
                 resp = await scan_url(ScanUrlRequest(url=data), db=db)
-                await websocket.send_json({"risk_level": resp["risk_level"], "confidence": resp["confidence"], "action": "block" if resp["risk_level"] > 90 else "warn"})
+                await websocket.send_json({
+                    "url": data,
+                    "risk_level": resp["risk_level"], 
+                    "confidence": resp["confidence"], 
+                    "action": "block" if resp["risk_level"] > 90 else "warn",
+                    "reason": resp.get("explanation", {}).get("explanation", "")
+                })
             finally:
                 db.close()
+    except WebSocketDisconnect:
+        logger.info("WebSocket gracefully disconnected.")
     except Exception as e:
-        logger.info("WebSocket disconnected: %s", type(e).__name__)
+        logger.info("WebSocket error: %s", type(e).__name__)
 
 sio_app = socketio.ASGIApp(sio, socketio_path='socket.io')
 app.mount("/socket.io", sio_app)
