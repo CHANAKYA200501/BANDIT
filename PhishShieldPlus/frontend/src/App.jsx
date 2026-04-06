@@ -57,7 +57,6 @@ export default function App() {
           
           <Globe />
           <NeuralShield />
-          <ShadowAvatar />
           <TxFlowGraph />
           
           <OrbitControls autoRotate enableZoom={false} autoRotateSpeed={0.5} />
