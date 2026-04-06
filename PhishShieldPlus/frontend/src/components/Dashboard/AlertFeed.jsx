@@ -7,7 +7,7 @@ export default function AlertFeed() {
 
   return (
     <div className="flex flex-col gap-3 h-full">
-      <h2 className="text-lg text-neonTeal font-bold font-outfit">Live Threat Feed</h2>
+      <h2 className="text-lg text-neonTeal font-bold font-outfit flex items-center gap-2">🔥 Live Threat Feed</h2>
       <div className="flex flex-col gap-2 overflow-y-auto flex-1 pr-2">
         <AnimatePresence>
           {feedUpdates.length === 0 ? (
