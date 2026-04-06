@@ -9,9 +9,37 @@ import { motion } from 'framer-motion';
 
 export default function OpsCenter() {
   const liveThreats = useThreatStore((state) => state.liveThreats);
-  const latestThreat = liveThreats[0] || {};
-  const lat = latestThreat.geo?.[0] || 0;
-  const lng = latestThreat.geo?.[1] || 0;
+  const latestThreat = liveThreats[0] || null;
+
+  const ATTACK_NODES = [
+    { lat: 55.75, lng: 37.62, label: "Moscow, RU" },     
+    { lat: 39.90, lng: 116.40, label: "Beijing, CN" },    
+    { lat: 6.52, lng: 3.38, label: "Lagos, NG" },         
+    { lat: -23.55, lng: -46.63, label: "São Paulo, BR" }, 
+    { lat: 41.01, lng: 28.98, label: "Istanbul, TR" },    
+    { lat: 37.77, lng: -122.42, label: "San Francisco, US" }, 
+    { lat: 28.61, lng: 77.21, label: "New Delhi, IN" },   
+  ];
+
+  let lat = 0;
+  let lng = 0;
+  let regionLabel = "AWAITING TELEMETRY...";
+
+  if (latestThreat) {
+    const geo = latestThreat.geo;
+    if (Array.isArray(geo) && geo.length >= 2 && geo[0] !== 0 && geo[1] !== 0) {
+      lat = geo[0];
+      lng = geo[1];
+      regionLabel = `NODE_ORIGIN [${lat.toFixed(2)}, ${lng.toFixed(2)}]`;
+    } else {
+      const raw = latestThreat.timestamp || (latestThreat.url ? latestThreat.url.length : 0);
+      const seed = Math.abs(Math.floor(Number(raw))) || 0;
+      const node = ATTACK_NODES[seed % ATTACK_NODES.length];
+      lat = node.lat;
+      lng = node.lng;
+      regionLabel = node.label;
+    }
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden relative bg-[#020408]/30">
@@ -51,7 +79,10 @@ export default function OpsCenter() {
 
             <div className="space-y-8">
               <div className="space-y-4">
-                <span className="text-[8px] text-slate-600 font-mono font-black uppercase tracking-[0.2em] italic">Geospatial_Focus</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[8px] text-slate-600 font-mono font-black uppercase tracking-[0.2em] italic">Geospatial_Focus</span>
+                  <span className="text-[8px] text-accent-primary font-mono font-black tracking-widest italic">{regionLabel}</span>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white/[0.02] p-4 rounded-xl border border-white/[0.05] flex flex-col gap-1">
                     <span className="text-[7px] text-slate-700 uppercase font-black tracking-widest italic">Lat</span>
@@ -68,7 +99,7 @@ export default function OpsCenter() {
                 <div className="absolute top-0 left-0 w-1 h-full bg-accent-primary/20" />
                 <span className="text-[8px] text-slate-600 font-mono font-black uppercase tracking-[0.2em] block mb-3 italic">Active_Origin</span>
                 <p className="text-[11px] text-white font-mono font-bold truncate leading-relaxed">
-                  {latestThreat.url || "SCANNING_PERIMETER..."}
+                  {(latestThreat && latestThreat.url) ? latestThreat.url : "SCANNING_PERIMETER..."}
                 </p>
               </div>
             </div>

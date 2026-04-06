@@ -71,12 +71,12 @@ export default function Sidebar() {
 
       {/* SYSTEM UTILS */}
       <div className="p-3 border-t border-white/5 space-y-3">
-        <button className="flex items-center h-12 w-full rounded-xl text-slate-500 hover:text-white hover:bg-white/[0.05] hover:shadow-md transition-all overflow-hidden group/btn">
+        <NavLink to="/settings" className={({ isActive }) => `flex items-center h-12 w-full rounded-xl transition-all overflow-hidden group/btn ${isActive ? 'text-accent-primary bg-accent-primary/10 border border-accent-primary/20 shadow-[0_0_15px_rgba(102,252,241,0.05)]' : 'text-slate-500 hover:text-white hover:bg-white/[0.05] hover:shadow-md'}`}>
           <div className="min-w-[54px] flex justify-center items-center">
             <Settings size={16} className="group-hover/btn:rotate-45 transition-transform duration-500" />
           </div>
           <span className="text-[9px] font-black uppercase tracking-[0.15em] opacity-0 group-hover:opacity-100 transition-opacity">Global_Config</span>
-        </button>
+        </NavLink>
 
         {/* ANALYST IDENT SHELL */}
         <div className="flex items-center h-14 w-full rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-accent-primary/30 hover:bg-accent-primary/[0.02] transition-all duration-500 overflow-hidden group/profile cursor-pointer">

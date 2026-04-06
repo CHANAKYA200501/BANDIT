@@ -70,10 +70,13 @@ export default function Globe({ threats = [] }) {
 
   const activeThreats = useMemo(() => {
     return threats.slice(0, 10).map((threat, idx) => {
-      // If threat has geo [lat, lng], use it; otherwise use a deterministic "random" node based on index
-      const geo = (threat.geo && threat.geo[0] !== 0) 
+      // Use threat timestamp or url length to assign a consistent deterministic node
+      const raw = threat.timestamp || (threat.url ? threat.url.length : idx);
+      const seed = Math.abs(Math.floor(Number(raw))) || idx;
+      const hasGeo = Array.isArray(threat.geo) && threat.geo.length >= 2 && threat.geo[0] !== 0;
+      const geo = hasGeo
         ? { lat: threat.geo[0], lng: threat.geo[1] }
-        : ATTACK_NODES[idx % ATTACK_NODES.length];
+        : ATTACK_NODES[seed % ATTACK_NODES.length];
       
       const pos = latLngToVec3(geo.lat, geo.lng, 2.05);
       const arc = generateArc(pos, targetPos);
