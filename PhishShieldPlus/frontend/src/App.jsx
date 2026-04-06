@@ -17,6 +17,7 @@ import OffensiveSuite from './pages/OffensiveSuite';
 import AuditLedger from './pages/AuditLedger';
 import AiTMDetector from './pages/AiTMDetector';
 import PigButcherDetector from './pages/PigButcherDetector';
+import BoomerangHoneypot from './pages/BoomerangHoneypot';
 
 export default function App() {
   useSocket();
@@ -59,6 +60,7 @@ export default function App() {
               <Route path="/ledger" element={<PageTransition><AuditLedger /></PageTransition>} />
               <Route path="/aitm" element={<PageTransition><AiTMDetector /></PageTransition>} />
               <Route path="/pig-butcher" element={<PageTransition><PigButcherDetector /></PageTransition>} />
+              <Route path="/honeypot" element={<PageTransition><BoomerangHoneypot /></PageTransition>} />
               <Route path="/" element={<Navigate to="/ops" replace />} />
             </Routes>
           </AnimatePresence>

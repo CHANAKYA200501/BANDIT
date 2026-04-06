@@ -8,7 +8,8 @@ import {
   Settings,
   Cpu,
   Wifi,
-  Brain
+  Brain,
+  Radar
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -20,6 +21,7 @@ export default function Sidebar() {
     { to: '/ledger', icon: Database, label: 'Audit Ledger' },
     { to: '/aitm', icon: Wifi, label: 'AiTM Detector', badge: 'NEW' },
     { to: '/pig-butcher', icon: Brain, label: 'Pig Butcher NLP', badge: 'HOT' },
+    { to: '/honeypot', icon: Radar, label: 'Boomerang Trap', badge: 'LIVE' },
   ];
 
   return (
