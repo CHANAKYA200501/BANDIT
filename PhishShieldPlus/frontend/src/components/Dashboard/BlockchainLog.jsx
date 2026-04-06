@@ -2,15 +2,17 @@ import React from 'react';
 import { useThreatStore } from '../../store/threatStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function BlockchainLog() {
+export default function BlockchainLog({ fullView = false }) {
   const chainEvents = useThreatStore((state) => state.chainEvents);
 
   return (
-    <div className="mt-4 flex flex-col gap-3">
-      <h2 className="text-lg text-neonTeal font-bold font-outfit flex items-center gap-2">
-        <span className="inline-block w-2 h-2 bg-neonTeal rounded-full animate-pulse"></span>
-        Blockchain Ledger ({chainEvents.length})
-      </h2>
+    <div className={`flex flex-col gap-3 ${fullView ? 'h-full' : 'mt-4'}`}>
+      {!fullView && (
+        <h2 className="text-lg text-neonTeal font-bold font-outfit flex items-center gap-2">
+          <span className="inline-block w-2 h-2 bg-neonTeal rounded-full animate-pulse"></span>
+          Blockchain Ledger ({chainEvents.length})
+        </h2>
+      )}
       <div className="bg-darkBg rounded border border-gray-700 overflow-hidden text-xs">
         <table className="w-full text-left">
           <thead className="bg-[#151c24] text-gray-400">

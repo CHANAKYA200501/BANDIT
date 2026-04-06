@@ -260,9 +260,21 @@ export default function ScanPanel() {
                 ))}
               </div>
             )}
-            <div className="mt-2 text-xs text-gray-400 border-t border-gray-700 pt-2 flex justify-between">
-              <span>Confidence: {scanResult.confidence}%</span>
-              <span>Action: {scanResult.action?.toUpperCase()}</span>
+            <div className="mt-2 text-xs text-gray-400 border-t border-gray-700 pt-2 flex justify-between items-center">
+              <div>
+                <span>Confidence: {scanResult.confidence}%</span>
+                <span className="mx-2 opacity-30">|</span>
+                <span>Action: {scanResult.action?.toUpperCase()}</span>
+              </div>
+              
+              {scanResult.risk_level > 70 && mode === 'URL' && (
+                <button 
+                  onClick={() => window.location.hash = '/offensive'} 
+                  className="bg-dangerRed/20 hover:bg-dangerRed/40 text-dangerRed border border-dangerRed/30 px-2 py-1 rounded text-[10px] font-bold transition-all animate-pulse"
+                >
+                  ENGAGE POISON PILL
+                </button>
+              )}
             </div>
           </motion.div>
         )}

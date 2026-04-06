@@ -100,6 +100,10 @@ class BlockchainLogRequest(BaseModel):
     input_hash: str = "0x00"
     risk_score: int = 0
 
+class PoisonPillRequest(BaseModel):
+    target_url: str
+    injection_count: int = 500
+
 # ──────────────────────────────────────────────
 # SCAN URL
 # ──────────────────────────────────────────────
@@ -290,6 +294,38 @@ async def breach_check(payload: BreachCheckRequest):
 async def blockchain_log(payload: BlockchainLogRequest):
     await sio.emit("chain_event", {"tx_hash": "0xMockHash123", "input_hash": payload.input_hash, "risk_score": payload.risk_score, "block": 100})
     return {"tx_hash": "0xMockHash123", "ipfs_cid": "QmMockCID", "block_number": 100}
+
+@app.post("/offensive-poison")
+async def offensive_poison(req: PoisonPillRequest):
+    """
+    Simulates a Poison Pill attack by injecting synthetic identities.
+    """
+    async def generate_poison_logs():
+        identities = ["Admin_Honey_Pot", "Support_Fake_01", "Security_Trap_Global", "Test_User_Alpha", "Legacy_Admin_Mock"]
+        for i in range(req.injection_count):
+            if i % 25 == 0:
+                await sio.emit("poison_progress", {
+                    "count": i,
+                    "target": req.target_url,
+                    "status": "injecting",
+                    "identity": f"{random.choice(identities)}_{i}"
+                })
+                await asyncio.sleep(0.1)
+        await sio.emit("poison_progress", {"count": req.injection_count, "target": req.target_url, "status": "completed"})
+
+    asyncio.create_task(generate_poison_logs())
+    return {"status": "Offensive campaign initialized", "target": req.target_url}
+
+@sio.on("connect")
+async def connect(sid, environ):
+    # Fix: Emit initial stats when a new client connects
+    db = next(get_db())
+    try:
+        total = db.query(ThreatLog).count()
+        blocked = db.query(ThreatLog).filter(ThreatLog.is_blocked == True).count()
+        await sio.emit("stats_update", {"threats_today": total, "scans_total": total, "blocked_count": blocked}, to=sid)
+    finally:
+        db.close()
 
 @app.websocket("/ws/monitor")
 async def websocket_monitor(websocket):

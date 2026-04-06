@@ -11,6 +11,8 @@ export const useThreatStore = create((set) => ({
     blocked_count: 0
   },
   killSwitchTriggered: null,
+  poisonLogs: [],
+  offensiveMode: false,
 
   addThreat: (threat) => set((state) => ({
     liveThreats: [threat, ...state.liveThreats].slice(0, 50)
@@ -30,5 +32,13 @@ export const useThreatStore = create((set) => ({
 
   triggerKillSwitch: (data) => set({ killSwitchTriggered: data }),
   
-  clearKillSwitch: () => set({ killSwitchTriggered: null })
+  clearKillSwitch: () => set({ killSwitchTriggered: null }),
+
+  addPoisonLog: (log) => set((state) => ({
+    poisonLogs: [log, ...state.poisonLogs].slice(0, 200)
+  })),
+
+  clearPoisonLogs: () => set({ poisonLogs: [] }),
+
+  setOffensiveMode: (mode) => set({ offensiveMode: mode })
 }));
