@@ -1,16 +1,17 @@
 import os
 import json
-import requests
 import random
+import aiohttp
 
 class AIAnalyzer:
     def __init__(self):
         self.api_key = os.getenv("GEMINI_API_KEY")
         self.configured = bool(self.api_key and "mock" not in self.api_key)
         self.model_name = "models/gemini-2.0-flash" # Fallback modern default
+        self.session = None
         
         if self.configured:
-            # Dynamically fetch the first available active model that supports generateContent to prevent 404 deprecations
+            import requests # Only for startup sync block
             try:
                 resp = requests.get(f"https://generativelanguage.googleapis.com/v1beta/models?key={self.api_key}", timeout=3)
                 if resp.status_code == 200:
@@ -21,8 +22,12 @@ class AIAnalyzer:
             except Exception:
                 pass
 
+    async def get_session(self):
+        if self.session is None or self.session.closed:
+            self.session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=50))
+        return self.session
 
-    def generate_explanation(self, context, url=None, text=None):
+    async def generate_explanation(self, context, url=None, text=None):
         def generate_logical_fallback():
             """Generates a realistic fallback based on context data."""
             # Signal Extraction
@@ -100,24 +105,31 @@ class AIAnalyzer:
             "severity": "low" | "medium" | "high" | "critical"
         }}
         
+        CRITICAL INSTRUCTIONS:
+        1. Do NOT flag domains simply because they relate to betting, gambling, adult content, or crypto. 
+        2. ONLY assign 'high' or 'critical' severity if the Context Data explicitly indicates a deceptive phishing attempt (e.g., brand impersonation without being the brand).
+        3. If Context Data 'malicious' scores are 0, default to 'low' severity unless there is extremely obvious fraud.
+        
         Context Data: {json.dumps(context)}
+        URL to analyze: {url}
         """
         
         endpoint = f"https://generativelanguage.googleapis.com/v1beta/{self.model_name}:generateContent?key={self.api_key}"
         try:
-            resp = requests.post(
+            session = await self.get_session()
+            async with session.post(
                 endpoint,
                 headers={"Content-Type": "application/json"},
                 json={"contents": [{"parts": [{"text": prompt}]}]},
-                timeout=5
-            )
-            if resp.status_code == 200:
-                data = resp.json()
-                text_response = data['candidates'][0]['content']['parts'][0]['text']
-                clean_json = text_response.strip().removeprefix("```json").removesuffix("```").strip()
-                return json.loads(clean_json)
-            else:
-                return generate_logical_fallback()
+                timeout=aiohttp.ClientTimeout(total=5)
+            ) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    text_response = data['candidates'][0]['content']['parts'][0]['text']
+                    clean_json = text_response.strip().removeprefix("```json").removesuffix("```").strip()
+                    return json.loads(clean_json)
+                else:
+                    return generate_logical_fallback()
         except Exception:
             return generate_logical_fallback()
 

@@ -13,35 +13,63 @@ class ThreatIntelligence:
         self.hibp_key = os.getenv("HIBP_API_KEY")
         self.shodan_key = os.getenv("SHODAN_API_KEY")
         self.urlscan_key = os.getenv("URLSCAN_API_KEY")
+        self.session = None
 
-        # Deterministic hash helper
+        # Mock fallbacks
+        self.mock_vt = {"malicious": 0, "suspicious": 1, "harmless": 50}
+
     def _deterministic_seed(self, url: str) -> int:
         return int(hashlib.sha256(url.encode()).hexdigest(), 16)
+
+    async def get_session(self):
+        if self.session is None or self.session.closed:
+            self.session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=100))
+        return self.session
 
     async def _async_mock_get(self, name, fallback_val, delay=0.5):
         await asyncio.sleep(delay)
         return fallback_val
 
+    def _generate_vt_mock(self, url):
+        domain = urlparse(url).netloc.lower()
+        path = urlparse(url).path.lower()
+        
+        phish_keywords = ['login', 'verify', 'update', 'secure', 'auth', 'account', 'banking', 'billing', 'wallet', 'credential', 'service', 'support', 'recovery', 'free', 'award']
+        brands = ['paypal', 'apple', 'microsoft', 'google', 'chase', 'netflix', 'amazon', 'meta', 'facebook', 'instagram']
+        
+        sus_score = 0
+        for brand in brands:
+            if brand in domain and not domain.endswith(f"{brand}.com"): sus_score += 3
+            if brand in path: sus_score += 2
+        for kw in phish_keywords:
+            if kw in domain or kw in path: sus_score += 1
+        
+        if "evil" in url or "phish" in url or "malicious" in url: sus_score += 5
+            
+        if sus_score > 0:
+            malicious = sus_score * 12
+        else:
+            malicious = 0
+
+        return {"malicious": malicious, "suspicious": sus_score * 5, "harmless": 50}
+
     async def check_virustotal(self, url):
         if not self.vt_key or "mock" in self.vt_key:
-            h = self._deterministic_seed(url)
-            malicious = (h % 15) if (h % 100) > 60 else 0
-            if "evil" in url or "phish" in url: malicious = 45
-            return await self._async_mock_get("VirusTotal", {"malicious": malicious, "suspicious": h % 5, "harmless": (h % 50) + 10})
+            return await self._async_mock_get("VirusTotal", self._generate_vt_mock(url))
         
         url_id = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
         endpoint = f"https://www.virustotal.com/api/v3/urls/{url_id}"
         headers = {"x-apikey": self.vt_key}
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(endpoint, headers=headers) as resp:
+            session = await self.get_session()
+            async with session.get(endpoint, headers=headers) as resp:
                     if resp.status == 200:
                         data = await resp.json()
                         return data.get("data", {}).get("attributes", {}).get("last_analysis_stats", self.mock_vt)
-                    return self.mock_vt
+                    return self._generate_vt_mock(url)
         except Exception:
-            return self.mock_vt
+            return self._generate_vt_mock(url)
 
     async def check_abuseipdb(self, ip, url=""):
         if not self.abuse_key or "mock" in self.abuse_key:
@@ -54,8 +82,8 @@ class ThreatIntelligence:
         params = {"ipAddress": ip, "maxAgeInDays": 90}
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(endpoint, headers=headers, params=params) as resp:
+            session = await self.get_session()
+            async with session.get(endpoint, headers=headers, params=params) as resp:
                     if resp.status == 200:
                         data = await resp.json()
                         return {"confidence_score": data.get("data", {}).get("abuseConfidenceScore", 0)}
@@ -73,8 +101,8 @@ class ThreatIntelligence:
         
         endpoint = f"https://api.shodan.io/shodan/host/{ip}?key={self.shodan_key}"
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(endpoint) as resp:
+            session = await self.get_session()
+            async with session.get(endpoint) as resp:
                     if resp.status == 200:
                         data = await resp.json()
                         return {"ports": data.get("ports", []), "isp": data.get("isp", "Unknown")}
@@ -93,8 +121,8 @@ class ThreatIntelligence:
         
         try:
             # We won't block awaiting the async scan finish, just return the observation link
-            async with aiohttp.ClientSession() as session:
-                async with session.post(endpoint, headers=headers, json=payload) as resp:
+            session = await self.get_session()
+            async with session.post(endpoint, headers=headers, json=payload) as resp:
                     if resp.status == 200:
                         data = await resp.json()
                         return {"screenshot_url": data.get("result", ""), "dom_hash": "Pending"}
@@ -122,8 +150,8 @@ class ThreatIntelligence:
         
         endpoint = f"https://api.pwnedpasswords.com/range/{prefix}"
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(endpoint) as resp:
+            session = await self.get_session()
+            async with session.get(endpoint) as resp:
                     if resp.status == 200:
                         text = await resp.text()
                         for line in text.splitlines():

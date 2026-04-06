@@ -169,7 +169,7 @@ async def scan_url(req: ScanUrlRequest, db: Session = Depends(get_db)):
     if intel_results.get("ssl", {}).get("is_self_signed"): risk += 25
 
     # AI-Driven Severity
-    gemini_eval = ai_analyzer.generate_explanation(context=intel_results, url=req.url)
+    gemini_eval = await ai_analyzer.generate_explanation(context=intel_results, url=req.url)
     sev = gemini_eval.get("severity", "low").lower()
     if sev == "critical": risk = max(risk, 95)
     elif sev == "high": risk = max(risk, 80)

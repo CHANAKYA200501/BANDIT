@@ -1,0 +1,4 @@
+URL: http://google.com | VT: {'malicious': 0, 'suspicious': 1, 'harmless': 50}
+URL: http://paypal-security-update.com | VT: {'malicious': 0, 'suspicious': 1, 'harmless': 50}
+URL: http://apple-verification.com/login | VT: {'malicious': 0, 'suspicious': 1, 'harmless': 50}
+URL: http://chase-bank-support.com | VT: {'malicious': 0, 'suspicious': 1, 'harmless': 50}

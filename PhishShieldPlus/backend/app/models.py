@@ -13,4 +13,4 @@ class ThreatLog(Base):
     source_ip = Column(String, default="127.0.0.1")
     threat_tactics = Column(String)  # JSON stringified array of tactics
     blockchain_hash = Column(String, default="pending")
-    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.datetime.now(datetime.timezone.utc))
