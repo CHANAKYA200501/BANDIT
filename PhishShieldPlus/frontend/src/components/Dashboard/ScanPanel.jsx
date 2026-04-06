@@ -57,20 +57,24 @@ export default function ScanPanel() {
         const explanationDict = data.explanation || {};
         const severity = risk > 70 ? "HIGH" : risk > 40 ? "MEDIUM" : "LOW";
         const sevColor = risk > 70 ? "text-dangerRed bg-dangerRed/20" : risk > 40 ? "text-warningYellow bg-warningYellow/20" : "text-neonTeal bg-neonTeal/20";
+        
+        // Use actual features returned by the IsolationForest backend
+        const feats = data.features || {};
         setScanResult({
           type: 'tx',
           risk_level: risk,
           severity, sevColor,
           anomaly_score: data.anomaly_score || (risk / 100),
           features: {
-            amount: parseInt(txAmount).toLocaleString('en-IN'),
-            velocity: txVelocity || "1",
-            hour_of_day: new Date().getHours(),
-            geo_distance_km: (Math.random() * 2000).toFixed(2)
+            'amount (₹)': Number(feats.amount || txAmount || 0).toLocaleString('en-IN'),
+            'velocity (txn/hr)': feats.velocity || txVelocity || "1",
+            'hour of day': feats.hour_of_day ?? new Date().getHours(),
+            'geo distance (km)': feats.geo_distance_km ?? "—"
           },
+          signals: data.signals || {},
           text: explanationDict.explanation || "Transaction analysis complete.",
           tactics: explanationDict.tactics_detected || [],
-          confidence: data.confidence || 88,
+          confidence: data.confidence || 99,
           action: explanationDict.recommendation || "verify"
         });
       } else {

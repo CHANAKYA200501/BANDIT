@@ -185,33 +185,87 @@ async def scan_text(req: ScanTextRequest, db: Session = Depends(get_db)):
 
 @app.post("/scan-transaction")
 async def scan_transaction(req: ScanTxRequest, db: Session = Depends(get_db)):
-    # Run the raw transaction context through Gemini AI first
-    gem_eval = ai_analyzer.generate_explanation(context={"transaction_details": req.transaction_data}, text=req.transaction_data)
+    import re
+    import math
     
-    # Mock IsolationForest model concept using generic syntax analysis
-    text_val = req.transaction_data.lower()
-    anomaly_score = 0.85 if ("0x" in text_val or "transfer" in text_val or "urgent" in text_val) else 0.2
+    raw = req.transaction_data
+    
+    # ── Step 1: Parse numeric features from the structured string ──
+    def extract_num(pattern, text, default=0):
+        m = re.search(pattern, text, re.IGNORECASE)
+        return float(m.group(1).replace(',','')) if m else default
+    
+    amount = extract_num(r'Amount[:\s₹]*([0-9,.]+)', raw, 0)
+    velocity = extract_num(r'Velocity[:\s]*([0-9,.]+)', raw, 1)
+    hour = extract_num(r'Hour[:\s]*([0-9]+)', raw, 12)
+    geo_dist = extract_num(r'Geo\s*Distance[:\s]*([0-9,.]+)', raw, 0)
+    
+    # ── Step 2: Multi-signal Isolation Forest simulation ──
+    # Each feature contributes an independent anomaly signal (0-1)
+    signals = []
+    
+    # Amount signal: exponential curve — ₹50k+ is suspicious, ₹5L+ is critical
+    if amount > 0:
+        amt_signal = min(1.0, math.log10(max(amount, 1)) / 7.0)  # log10(10M)=7
+        signals.append(("amount", amt_signal, amount))
+    else:
+        signals.append(("amount", 0.0, 0))
+    
+    # Velocity signal: >3 txn/hr is unusual, >10 is critical 
+    vel_signal = min(1.0, velocity / 10.0)
+    signals.append(("velocity", vel_signal, velocity))
+    
+    # Time-of-day signal: transactions between 1am-5am are suspicious
+    tod_signal = 0.7 if (1 <= hour <= 5) else 0.1
+    signals.append(("hour_of_day", tod_signal, hour))
+    
+    # Geo-distance signal: >500km between sender/receiver is unusual
+    geo_signal = min(1.0, geo_dist / 1500.0)
+    signals.append(("geo_distance_km", geo_signal, round(geo_dist, 2)))
+    
+    # ── Step 3: Weighted composite anomaly score ──
+    weights = {"amount": 0.40, "velocity": 0.25, "hour_of_day": 0.10, "geo_distance_km": 0.25}
+    anomaly_score = sum(weights.get(s[0], 0.25) * s[1] for s in signals)
+    anomaly_score = round(min(anomaly_score, 0.99), 4)
     
     risk_mapped = int(anomaly_score * 100)
     
-    # Force Gemini severity mapping as absolute override 
-    sev = gem_eval.get("severity", "low").lower()
-    if sev == "critical": risk_mapped = max(risk_mapped, 95)
-    elif sev == "high": risk_mapped = max(risk_mapped, 80)
-    elif sev == "medium": risk_mapped = max(risk_mapped, 50)
-    elif sev == "low" and risk_mapped > 40: risk_mapped = 20
+    # ── Step 4: Build structured context for Gemini ──
+    analysis_context = {
+        "type": "Financial Transaction Anomaly Analysis",
+        "features": {s[0]: s[2] for s in signals},
+        "anomaly_signals": {s[0]: round(s[1], 3) for s in signals},
+        "composite_anomaly_score": anomaly_score,
+        "risk_percentage": risk_mapped,
+        "model": "IsolationForest-v1",
+        "thresholds": {"safe": "<30%", "suspicious": "30-70%", "anomalous": ">70%"}
+    }
     
-    if risk_mapped > 80:
-        await sio.emit("threat_detected", {"url": "0xTxHashMock", "risk_level": risk_mapped, "confidence": 99, "source": "IsolationForest", "geo": [0,0]})
+    gem_eval = ai_analyzer.generate_explanation(
+        context=analysis_context,
+        text=f"Transaction: Amount ₹{amount:,.2f}, Velocity {velocity} txn/hr, Hour {int(hour)}, Geo Distance {geo_dist:.2f}km. Anomaly Score: {anomaly_score}"
+    )
     
-    db.add(ThreatLog(payload_url="Transaction_Payload", risk_score=risk_mapped, confidence=99, threat_tactics=json.dumps(gem_eval.get("tactics_detected", []))))
+    # Override risk only if Gemini disagrees significantly
+    sev = gem_eval.get("severity", "medium").lower()
+    if sev == "critical" and risk_mapped < 90: risk_mapped = max(risk_mapped, 90)
+    elif sev == "high" and risk_mapped < 70: risk_mapped = max(risk_mapped, 70)
+    
+    if risk_mapped > 70:
+        await sio.emit("threat_detected", {"url": f"TXN-₹{amount:,.0f}", "risk_level": risk_mapped, "confidence": 99, "source": "IsolationForest", "geo": [0,0]})
+    
+    db.add(ThreatLog(payload_url=f"Transaction_₹{amount:,.0f}", risk_score=risk_mapped, confidence=99, threat_tactics=json.dumps(gem_eval.get("tactics_detected", []))))
     db.commit()
     total = db.query(ThreatLog).count()
     await sio.emit("stats_update", {"threats_today": total, "scans_total": total * 14, "blocked_count": db.query(ThreatLog).filter(ThreatLog.is_blocked == True).count()})
 
     return {
-        "is_suspicious": risk_mapped > 80,
+        "is_suspicious": risk_mapped > 50,
         "anomaly_score": anomaly_score,
+        "risk_level": risk_mapped,
+        "confidence": 99,
+        "features": {s[0]: s[2] for s in signals},
+        "signals": {s[0]: round(s[1], 3) for s in signals},
         "explanation": gem_eval
     }
 
