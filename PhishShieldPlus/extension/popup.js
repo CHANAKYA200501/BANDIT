@@ -134,6 +134,101 @@ async function init() {
       renderHistory([]);
     });
   });
+
+  // 5. Chat Monitor toggle
+  initChatMonitor(tab);
+}
+
+// ─── Chat Monitor Toggle Logic ───────────────────────────────────────────────
+function initChatMonitor(tab) {
+  const toggle = document.getElementById('chatMonitorToggle');
+  const card = document.getElementById('monitorCard');
+  const statusEl = document.getElementById('monitorStatus');
+
+  if (!toggle || !card || !statusEl) return;
+
+  // Supported platform detection (popup-side for visual feedback)
+  const SUPPORTED_PLATFORMS = [
+    { match: /web\.whatsapp\.com/i, label: 'WhatsApp Web' },
+    { match: /web\.telegram\.org/i, label: 'Telegram Web' },
+    { match: /messenger\.com|facebook\.com\/messages/i, label: 'Messenger' },
+    { match: /instagram\.com\/direct/i, label: 'Instagram DMs' },
+    { match: /discord\.com\/channels/i, label: 'Discord' },
+    { match: /signal\.org/i, label: 'Signal Web' },
+  ];
+
+  const tabUrl = tab?.url || '';
+  const detectedPlatform = SUPPORTED_PLATFORMS.find(p => p.match.test(tabUrl));
+
+  // Load saved preference
+  chrome.storage.local.get(['chatMonitorEnabled'], (result) => {
+    const savedEnabled = !!result.chatMonitorEnabled;
+    toggle.checked = savedEnabled;
+
+    if (savedEnabled && detectedPlatform) {
+      card.classList.add('active');
+    }
+
+    // Also query the content script for live status
+    if (tab?.id) {
+      chrome.tabs.sendMessage(tab.id, { action: 'GET_CHAT_MONITOR_STATUS' }, (response) => {
+        if (chrome.runtime.lastError) {
+          // Content script not loaded — show platform info only
+          updateMonitorStatus(statusEl, card, detectedPlatform, false, savedEnabled);
+          return;
+        }
+        if (response) {
+          updateMonitorStatus(statusEl, card, detectedPlatform, response.enabled, savedEnabled, response.platform, response.bufferSize);
+          toggle.checked = response.enabled;
+        }
+      });
+    } else {
+      updateMonitorStatus(statusEl, card, detectedPlatform, false, savedEnabled);
+    }
+  });
+
+  // Handle toggle change
+  toggle.addEventListener('change', () => {
+    const enabled = toggle.checked;
+
+    chrome.runtime.sendMessage({
+      action: 'TOGGLE_CHAT_MONITOR_SETTING',
+      enabled
+    }, (response) => {
+      if (response) {
+        const isActive = response.enabled;
+        toggle.checked = isActive;
+
+        if (isActive) {
+          card.classList.add('active');
+          const plat = response.platform || detectedPlatform?.label;
+          if (plat) {
+            statusEl.innerHTML = `<span class="platform-tag">● ${plat}</span> Monitoring active — analyzing conversation trajectory in real-time.`;
+          } else {
+            statusEl.textContent = 'Enabled but no supported messaging platform detected on this tab.';
+          }
+        } else {
+          card.classList.remove('active');
+          statusEl.textContent = 'Chat monitoring disabled. All memory buffers have been wiped.';
+        }
+      }
+    });
+  });
+}
+
+function updateMonitorStatus(statusEl, card, detectedPlatform, isLive, isSaved, livePlatform, bufferSize) {
+  if (isLive && livePlatform) {
+    card.classList.add('active');
+    statusEl.innerHTML = `<span class="platform-tag">● ${livePlatform}</span> Actively monitoring — ${bufferSize || 0} messages in volatile buffer.`;
+  } else if (isSaved && detectedPlatform) {
+    card.classList.add('active');
+    statusEl.innerHTML = `<span class="platform-tag">${detectedPlatform.label}</span> detected — monitoring will start when messages appear.`;
+  } else if (detectedPlatform) {
+    statusEl.innerHTML = `<span class="platform-tag">${detectedPlatform.label}</span> detected — toggle to enable real-time NLP monitoring.`;
+  } else {
+    statusEl.textContent = 'Navigate to WhatsApp Web, Telegram, Messenger, or Instagram DMs to use this feature.';
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
+

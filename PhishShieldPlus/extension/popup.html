@@ -18,17 +18,19 @@
       --accent-red: #e24b4a;
       --accent-orange: #f59e0b;
       --accent-green: #10b981;
+      --accent-violet: #a78bfa;
       --text-primary: #f9fafb;
       --text-muted: #6b7280;
     }
 
     body {
       width: 360px;
-      min-height: 480px;
+      min-height: 520px;
       background: var(--bg-primary);
       color: var(--text-primary);
       font-family: 'Outfit', 'Inter', system-ui, sans-serif;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
 
     /* ─── HEADER ─── */
@@ -89,7 +91,7 @@
       50% { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
     }
 
-    /* ─── CURRENT PAGE SECTION ─── */
+    /* ─── SECTIONS ─── */
     .section { padding: 16px 20px; }
     .section-label {
       font-size: 9px;
@@ -172,13 +174,134 @@
       font-family: 'Inter', sans-serif;
     }
 
+    /* ─── CHAT MONITOR SECTION ─── */
+    .monitor-section {
+      padding: 0 20px 16px;
+    }
+    .monitor-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      transition: all 0.3s;
+    }
+    .monitor-card.active {
+      border-color: rgba(167,139,250,0.25);
+      box-shadow: 0 0 20px rgba(139,92,246,0.08);
+    }
+    .monitor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .monitor-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .monitor-icon {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      background: rgba(139,92,246,0.1);
+      border: 1px solid rgba(139,92,246,0.2);
+    }
+    .monitor-title {
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--accent-violet);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* Toggle switch */
+    .toggle-wrap {
+      position: relative;
+      width: 40px;
+      height: 22px;
+    }
+    .toggle-input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.08);
+      border-radius: 100px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
+      background: #fff;
+      border-radius: 50%;
+      transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .toggle-input:checked + .toggle-slider {
+      background: rgba(139,92,246,0.4);
+      border-color: rgba(139,92,246,0.5);
+      box-shadow: 0 0 12px rgba(139,92,246,0.3);
+    }
+    .toggle-input:checked + .toggle-slider::before {
+      transform: translateX(18px);
+      background: var(--accent-violet);
+    }
+
+    .monitor-status {
+      font-size: 9px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+    .monitor-status .platform-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      background: rgba(139,92,246,0.1);
+      border: 1px solid rgba(139,92,246,0.2);
+      border-radius: 100px;
+      font-size: 8px;
+      font-weight: 900;
+      color: var(--accent-violet);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .privacy-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 8px 10px;
+      background: rgba(16,185,129,0.05);
+      border: 1px solid rgba(16,185,129,0.1);
+      border-radius: 8px;
+      font-size: 8px;
+      color: rgba(16,185,129,0.7);
+      line-height: 1.5;
+    }
+    .privacy-note .lock { font-size: 10px; flex-shrink: 0; margin-top: 1px; }
+
     /* ─── THREAT HISTORY ─── */
     .history-section { padding: 0 20px 16px; }
     .history-list {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      max-height: 180px;
+      max-height: 140px;
       overflow-y: auto;
     }
     .history-list::-webkit-scrollbar { width: 3px; }
@@ -268,11 +391,11 @@
     /* ─── EMPTY STATE ─── */
     .empty-state {
       text-align: center;
-      padding: 28px 20px;
+      padding: 20px 16px;
       color: var(--text-muted);
       font-size: 11px;
     }
-    .empty-state .icon { font-size: 28px; margin-bottom: 8px; }
+    .empty-state .icon { font-size: 24px; margin-bottom: 6px; }
 
     /* ─── SCANNING ANIMATION ─── */
     .scanning-bar {
@@ -316,6 +439,30 @@
     </div>
   </div>
 
+  <!-- REAL-TIME CHAT MONITOR -->
+  <div class="monitor-section">
+    <div class="section-label">Real-Time Chat Shield</div>
+    <div class="monitor-card" id="monitorCard">
+      <div class="monitor-header">
+        <div class="monitor-left">
+          <div class="monitor-icon">🧠</div>
+          <span class="monitor-title">Pig Butcher NLP</span>
+        </div>
+        <label class="toggle-wrap">
+          <input type="checkbox" class="toggle-input" id="chatMonitorToggle" />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="monitor-status" id="monitorStatus">
+        Opt-in to enable real-time conversation monitoring on messaging platforms.
+      </div>
+      <div class="privacy-note">
+        <span class="lock">🔒</span>
+        <span><strong>Zero Storage Guarantee</strong> — Messages are analyzed in volatile memory only. Nothing is saved, logged, or tracked. Buffers are wiped immediately after analysis.</span>
+      </div>
+    </div>
+  </div>
+
   <!-- THREAT HISTORY -->
   <div class="history-section">
     <div class="section-label">Recent Threat Log</div>
@@ -336,3 +483,4 @@
   <script src="popup.js"></script>
 </body>
 </html>
+

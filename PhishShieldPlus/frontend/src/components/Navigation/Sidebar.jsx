@@ -7,7 +7,8 @@ import {
   Globe,
   Settings,
   Cpu,
-  Wifi
+  Wifi,
+  Brain
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -18,6 +19,7 @@ export default function Sidebar() {
     { to: '/offensive', icon: Terminal, label: 'Offensive Suite' },
     { to: '/ledger', icon: Database, label: 'Audit Ledger' },
     { to: '/aitm', icon: Wifi, label: 'AiTM Detector', badge: 'NEW' },
+    { to: '/pig-butcher', icon: Brain, label: 'Pig Butcher NLP', badge: 'HOT' },
   ];
 
   return (

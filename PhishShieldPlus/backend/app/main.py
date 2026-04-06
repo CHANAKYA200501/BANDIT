@@ -120,6 +120,15 @@ class PoisonPillRequest(BaseModel):
     target_url: str
     injection_count: int = 500
 
+class ChatMessage(BaseModel):
+    sender: str
+    text: str
+    timestamp: str = ""
+
+class AnalyzeChatRequest(BaseModel):
+    messages: list[ChatMessage]
+    conversation_id: str = ""
+
 # Semi-realistic geo lookup (Mock for demo)
 def get_geo_for_url(url: str):
     tld_geo = {
@@ -552,6 +561,186 @@ async def get_init_data(db: Session = Depends(get_db)):
         "recent_threats": formatted_threats,
         "chain_events": chain_events
     }
+
+# ──────────────────────────────────────────────
+# PIG BUTCHERING / TEMPORAL NLP DETECTOR
+# ──────────────────────────────────────────────
+@app.post("/analyze-chat")
+async def analyze_chat(req: AnalyzeChatRequest):
+    """
+    Temporal Emotional NLP engine:
+    Analyzes the full conversation trajectory to identify pig butchering
+    (杀猪盘) multi-phase grooming patterns using Gemini's large context window.
+    """
+    # Build the conversation transcript for Gemini
+    transcript = "\n".join([
+        f"[{m.timestamp}] {m.sender}: {m.text}"
+        for m in req.messages
+    ])
+
+    prompt = f"""You are PhishShield+ Temporal NLP Engine — a cybersecurity analyst specializing in "Pig Butchering" (杀猪盘 / SHA ZHU PAN) scam detection.
+
+TASK: Analyze the following conversation transcript and determine if it follows the classic 4-phase pig butchering grooming trajectory.
+
+THE 4 PHASES TO DETECT:
+1. "The Hook" — Innocent "wrong number" / misdirected message / dating app match. The very first contact that seems accidental.
+2. "Rapport Building" — Daily check-ins, sharing fake photos, emotional bonding. Building a parasocial relationship over days/weeks.  
+3. "Lifestyle Flex" — Subtly mentioning wealth, luxury lifestyle, successful investments, a "rich uncle" or "mentor" figure.
+4. "Financial Exploitation" — Convincing the victim to invest money, download a trading app, deposit funds, or connect crypto wallets. Uses urgency and emotional pressure.
+
+CONVERSATION TRANSCRIPT:
+{transcript}
+
+Respond ONLY with a valid JSON object (no markdown, no code fences). Use this exact schema:
+{{
+    "grooming_probability": <integer 0-100>,
+    "current_phase": "<string: which phase the conversation is currently in>",
+    "phase_trajectory": [
+        {{
+            "phase": "The Hook",
+            "confidence": <integer 0-100>,
+            "detected": <boolean>,
+            "evidence": "<string: specific quote or pattern from the transcript>"
+        }},
+        {{
+            "phase": "Rapport Building",
+            "confidence": <integer 0-100>,
+            "detected": <boolean>,
+            "evidence": "<string>"
+        }},
+        {{
+            "phase": "Lifestyle Flex",
+            "confidence": <integer 0-100>,
+            "detected": <boolean>,
+            "evidence": "<string>"
+        }},
+        {{
+            "phase": "Financial Exploitation",
+            "confidence": <integer 0-100>,
+            "detected": <boolean>,
+            "evidence": "<string>"
+        }}
+    ],
+    "emotional_manipulation_score": <integer 0-100>,
+    "financial_keywords_detected": ["<string>", ...],
+    "urgency_triggers": ["<string>", ...],
+    "red_flags": ["<string>", ...],
+    "verdict": "CLEAN" | "SUSPICIOUS" | "PIG_BUTCHERING_CONFIRMED",
+    "explanation": "<string: 2-3 sentence expert analysis>",
+    "recommended_action": "<string: what the victim should do>",
+    "timeline_analysis": "<string: how the grooming trajectory evolved over the timeframe>"
+}}
+
+GRADING RULES:
+- If grooming_probability >= 85, verdict MUST be "PIG_BUTCHERING_CONFIRMED"
+- If grooming_probability 40-84, verdict MUST be "SUSPICIOUS"
+- If grooming_probability < 40, verdict MUST be "CLEAN"
+- Look for TRAJECTORY across messages, not individual red flags
+- A normal conversation between friends with no financial solicitation is CLEAN
+"""
+
+    if ai_analyzer.configured:
+        try:
+            endpoint = f"https://generativelanguage.googleapis.com/v1beta/{ai_analyzer.model_name}:generateContent?key={ai_analyzer.api_key}"
+            session = await ai_analyzer.get_session()
+            async with session.post(
+                endpoint,
+                headers={"Content-Type": "application/json"},
+                json={"contents": [{"parts": [{"text": prompt}]}]},
+                timeout=aiohttp.ClientTimeout(total=15)
+            ) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    text_response = data['candidates'][0]['content']['parts'][0]['text']
+                    clean_json = text_response.strip().removeprefix("```json").removesuffix("```").strip()
+                    result = json.loads(clean_json)
+
+                    # Emit threat if high probability
+                    if result.get("grooming_probability", 0) >= 85:
+                        await sio.emit("threat_detected", {
+                            "url": f"PigButcher-{req.conversation_id or 'unknown'}",
+                            "risk_level": result["grooming_probability"],
+                            "confidence": 99,
+                            "source": "Temporal-NLP-v1",
+                            "geo": [0, 0],
+                            "timestamp": time.time()
+                        })
+
+                    return result
+        except Exception as e:
+            logger.warning(f"Gemini pig-butcher analysis failed: {e}")
+
+    # ─── LOCAL FALLBACK: Keyword + Heuristic Analysis ─────────────────
+    all_text = " ".join([m.text for m in req.messages]).lower()
+    senders = set([m.sender.lower() for m in req.messages])
+    msg_count = len(req.messages)
+
+    # Phase detection heuristics
+    hook_kw = ["wrong number", "is this", "conference", "matched", "bumble", "tinder", "dating app"]
+    rapport_kw = ["good morning", "how are you", "I worry", "miss you", "thinking about", "care about", "daily", "yoga", "restaurant"]
+    flex_kw = ["portfolio", "profit", "returns", "Goldman Sachs", "uncle", "mentor", "professor", "investment", "luxury", "ritz", "passive income", "DeFi", "staking"]
+    exploit_kw = ["deposit", "download", "trading node", "trading app", "MetaTrader", "coinflex", "connect wallet", "put in", "once in a lifetime", "closing access", "$25,000", "$10,000", "$50,000", "build a future", "trust me"]
+
+    hook_score = min(100, sum(25 for kw in hook_kw if kw.lower() in all_text))
+    rapport_score = min(100, sum(15 for kw in rapport_kw if kw.lower() in all_text))
+    flex_score = min(100, sum(18 for kw in flex_kw if kw.lower() in all_text))
+    exploit_score = min(100, sum(20 for kw in exploit_kw if kw.lower() in all_text))
+
+    overall = int(hook_score * 0.1 + rapport_score * 0.2 + flex_score * 0.3 + exploit_score * 0.4)
+    overall = min(99, overall)
+
+    fin_kw_found = [kw for kw in flex_kw + exploit_kw if kw.lower() in all_text]
+    urgency_found = [kw for kw in ["once in a lifetime", "closing access", "trust me", "guarantee", "our chance", "exclusive"] if kw.lower() in all_text]
+
+    if overall >= 85:
+        verdict = "PIG_BUTCHERING_CONFIRMED"
+    elif overall >= 40:
+        verdict = "SUSPICIOUS"
+    else:
+        verdict = "CLEAN"
+
+    # Determine current phase
+    if exploit_score > 40:
+        current_phase = "Financial Exploitation"
+    elif flex_score > 40:
+        current_phase = "Lifestyle Flex"
+    elif rapport_score > 40:
+        current_phase = "Rapport Building"
+    elif hook_score > 0:
+        current_phase = "The Hook"
+    else:
+        current_phase = "No Grooming Detected"
+
+    result = {
+        "grooming_probability": overall,
+        "current_phase": current_phase,
+        "phase_trajectory": [
+            {"phase": "The Hook", "confidence": hook_score, "detected": hook_score > 20, "evidence": "Keyword pattern match (local heuristic engine)"},
+            {"phase": "Rapport Building", "confidence": rapport_score, "detected": rapport_score > 20, "evidence": "Emotional bonding keywords detected"},
+            {"phase": "Lifestyle Flex", "confidence": flex_score, "detected": flex_score > 20, "evidence": "Wealth/investment signaling detected"},
+            {"phase": "Financial Exploitation", "confidence": exploit_score, "detected": exploit_score > 20, "evidence": "Direct financial solicitation detected"},
+        ],
+        "emotional_manipulation_score": min(99, rapport_score + int(exploit_score * 0.3)),
+        "financial_keywords_detected": fin_kw_found[:12],
+        "urgency_triggers": urgency_found,
+        "red_flags": [f"Keyword detected: {kw}" for kw in (fin_kw_found[:5] + urgency_found[:3])],
+        "verdict": verdict,
+        "explanation": f"Local heuristic analysis across {msg_count} messages from {len(senders)} senders. Grooming probability {overall}% based on keyword trajectory analysis.",
+        "recommended_action": "BLOCK sender and report to authorities." if overall >= 85 else "Monitor conversation closely." if overall >= 40 else "No action needed.",
+        "timeline_analysis": f"Analyzed {msg_count} messages. Phase progression pattern {'strongly matches' if overall >= 70 else 'partially matches' if overall >= 40 else 'does not match'} pig butchering grooming trajectory."
+    }
+
+    if overall >= 85:
+        await sio.emit("threat_detected", {
+            "url": f"PigButcher-{req.conversation_id or 'heuristic'}",
+            "risk_level": overall,
+            "confidence": 90,
+            "source": "Temporal-NLP-Heuristic",
+            "geo": [0, 0],
+            "timestamp": time.time()
+        })
+
+    return result
 
 # ──────────────────────────────────────────────
 # SCAN TEXT

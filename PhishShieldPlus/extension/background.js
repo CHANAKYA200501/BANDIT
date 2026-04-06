@@ -208,6 +208,69 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     .catch(() => sendResponse({}));
     return true; // Keep message channel open for async response
   }
+
+  // ─── REAL-TIME CHAT MONITOR: Analyze conversation in-memory ────────────
+  // NOTE: Messages are NEVER stored — they come from volatile content script
+  // memory and are sent directly to the backend for analysis, then discarded.
+  if (request.action === "CHAT_MONITOR_ANALYZE") {
+    console.log(`[PhishShield+ ChatMonitor] Analyzing ${request.messages?.length || 0} messages from ${request.platform}`);
+
+    fetch(`${BACKEND_URL}/analyze-chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: request.messages,
+        conversation_id: request.conversation_id || `live_${Date.now()}`
+      })
+    })
+    .then(r => r.json())
+    .then(result => {
+      // If high grooming probability, fire system notification
+      if (result.grooming_probability >= 85) {
+        chrome.notifications.create({
+          type: "basic",
+          iconUrl: "icon.png",
+          title: "🚨 PhishShield+: PIG BUTCHERING DETECTED",
+          message: `${result.grooming_probability}% grooming probability detected on ${request.platform}. This conversation matches a known scam pattern.`,
+          priority: 2
+        });
+      } else if (result.grooming_probability >= 50) {
+        chrome.notifications.create({
+          type: "basic",
+          iconUrl: "icon.png",
+          title: "⚠️ PhishShield+: Suspicious Chat Pattern",
+          message: `${result.grooming_probability}% grooming indicators on ${request.platform}. Monitor this conversation carefully.`,
+          priority: 1
+        });
+      }
+      sendResponse(result);
+    })
+    .catch(err => {
+      console.warn("[PhishShield+ ChatMonitor] Backend unreachable:", err);
+      sendResponse({ grooming_probability: 0, error: "Backend unreachable" });
+    });
+
+    return true; // Keep channel open for async response
+  }
+
+  // ─── TOGGLE CHAT MONITOR (persists opt-in preference only) ─────────────
+  if (request.action === "TOGGLE_CHAT_MONITOR_SETTING") {
+    chrome.storage.local.set({ chatMonitorEnabled: request.enabled });
+    // Forward toggle to the active tab's content script
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.id) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          action: 'TOGGLE_CHAT_MONITOR',
+          enabled: request.enabled
+        }, (response) => {
+          sendResponse(response || { enabled: request.enabled });
+        });
+      } else {
+        sendResponse({ enabled: request.enabled });
+      }
+    });
+    return true;
+  }
 });
 
 async function broadcastHUDUpdate(url, data) {
