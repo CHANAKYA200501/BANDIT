@@ -15,6 +15,7 @@ import OpsCenter from './pages/OpsCenter';
 import Scanner from './pages/Scanner';
 import OffensiveSuite from './pages/OffensiveSuite';
 import AuditLedger from './pages/AuditLedger';
+import AiTMDetector from './pages/AiTMDetector';
 
 export default function App() {
   useSocket();
@@ -55,6 +56,7 @@ export default function App() {
               <Route path="/scanner" element={<PageTransition><Scanner /></PageTransition>} />
               <Route path="/offensive" element={<PageTransition><OffensiveSuite /></PageTransition>} />
               <Route path="/ledger" element={<PageTransition><AuditLedger /></PageTransition>} />
+              <Route path="/aitm" element={<PageTransition><AiTMDetector /></PageTransition>} />
               <Route path="/" element={<Navigate to="/ops" replace />} />
             </Routes>
           </AnimatePresence>

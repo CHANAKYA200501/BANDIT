@@ -6,7 +6,8 @@ import {
   Database, 
   Globe,
   Settings,
-  Cpu
+  Cpu,
+  Wifi
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -16,6 +17,7 @@ export default function Sidebar() {
     { to: '/scanner', icon: ShieldAlert, label: 'Forensic Lab' },
     { to: '/offensive', icon: Terminal, label: 'Offensive Suite' },
     { to: '/ledger', icon: Database, label: 'Audit Ledger' },
+    { to: '/aitm', icon: Wifi, label: 'AiTM Detector', badge: 'NEW' },
   ];
 
   return (
@@ -44,11 +46,17 @@ export default function Sidebar() {
                 : 'text-slate-500 hover:text-white hover:bg-white/[0.05] hover:shadow-lg'}
             `}
           >
-            <div className="min-w-[54px] flex justify-center items-center">
+            <div className="min-w-[54px] flex justify-center items-center relative">
               <item.icon size={18} className="transition-all duration-300 group-hover/item:scale-110 group-hover/item:text-accent-primary" />
+              {item.badge && (
+                <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-danger-primary flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                </div>
+              )}
             </div>
-            <span className="text-[9px] font-black uppercase tracking-[0.15em] opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap">
+            <span className="text-[9px] font-black uppercase tracking-[0.15em] opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap flex items-center gap-2">
               {item.label}
+              {item.badge && <span className="text-[7px] bg-danger-primary/20 text-danger-primary border border-danger-primary/30 px-1.5 py-0.5 rounded-md">{item.badge}</span>}
             </span>
             
             {/* Active Glow Bar */}
