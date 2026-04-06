@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhishShield+</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #05080d;
+      --bg-secondary: #0a0e18;
+      --bg-card: rgba(255,255,255,0.03);
+      --border: rgba(255,255,255,0.07);
+      --accent-cyan: #66fcf1;
+      --accent-red: #e24b4a;
+      --accent-orange: #f59e0b;
+      --accent-green: #10b981;
+      --text-primary: #f9fafb;
+      --text-muted: #6b7280;
+    }
+
+    body {
+      width: 360px;
+      min-height: 480px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+      overflow: hidden;
+    }
+
+    /* ─── HEADER ─── */
+    .header {
+      background: linear-gradient(135deg, #0a0e18 0%, #0d1220 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-shield {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent-cyan) 0%, #45e8e0 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 0 20px rgba(102,252,241,0.3);
+    }
+    .logo-text {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .logo-text span { color: var(--accent-cyan); }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 100px;
+      font-size: 9px;
+      font-weight: 900;
+      color: var(--accent-green);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+    .status-badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      animation: pulse-green 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-green {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+      50% { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+    }
+
+    /* ─── CURRENT PAGE SECTION ─── */
+    .section { padding: 16px 20px; }
+    .section-label {
+      font-size: 9px;
+      font-weight: 900;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.25em;
+      margin-bottom: 10px;
+    }
+
+    .threat-meter-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .threat-meter-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--meter-color, var(--accent-cyan));
+      opacity: 0.6;
+    }
+
+    .url-text {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'Inter', monospace;
+      margin-bottom: 14px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .risk-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .risk-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+    .risk-score {
+      font-size: 28px;
+      font-weight: 900;
+      font-family: 'Outfit', sans-serif;
+      letter-spacing: -0.04em;
+      color: var(--meter-color, var(--accent-cyan));
+      transition: color 0.3s;
+    }
+    .risk-score .unit { font-size: 14px; opacity: 0.6; }
+
+    .risk-bar-track {
+      height: 6px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .risk-bar-fill {
+      height: 100%;
+      border-radius: 100px;
+      background: var(--meter-color, var(--accent-cyan));
+      transition: width 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+      box-shadow: 0 0 10px var(--meter-color, var(--accent-cyan));
+    }
+
+    .reason-text {
+      margin-top: 12px;
+      font-size: 11px;
+      color: #9ca3af;
+      line-height: 1.5;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* ─── THREAT HISTORY ─── */
+    .history-section { padding: 0 20px 16px; }
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .history-list::-webkit-scrollbar { width: 3px; }
+    .history-list::-webkit-scrollbar-track { background: transparent; }
+    .history-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      animation: slide-in 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .history-item:hover { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); }
+
+    .hist-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .hist-content { flex: 1; overflow: hidden; }
+    .hist-url {
+      font-size: 10px;
+      color: #d1d5db;
+      font-family: 'Inter', monospace;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .hist-meta {
+      display: flex;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .hist-risk {
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+    }
+    .hist-time { font-size: 9px; color: var(--text-muted); }
+
+    /* ─── FOOTER ACTIONS ─── */
+    .footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+    }
+    .btn {
+      flex: 1;
+      height: 38px;
+      border-radius: 10px;
+      border: none;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+      font-family: 'Outfit', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-primary {
+      background: var(--accent-cyan);
+      color: #000;
+    }
+    .btn-primary:hover { transform: scale(1.03); box-shadow: 0 8px 24px rgba(102,252,241,0.3); }
+    .btn-ghost {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .btn-ghost:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
+
+    /* ─── EMPTY STATE ─── */
+    .empty-state {
+      text-align: center;
+      padding: 28px 20px;
+      color: var(--text-muted);
+      font-size: 11px;
+    }
+    .empty-state .icon { font-size: 28px; margin-bottom: 8px; }
+
+    /* ─── SCANNING ANIMATION ─── */
+    .scanning-bar {
+      position: absolute;
+      top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(102,252,241,0.05), transparent);
+      animation: scan-sweep 2s linear infinite;
+    }
+    @keyframes scan-sweep {
+      to { left: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-shield">🛡</div>
+      <div class="logo-text">PhishShield<span>+</span></div>
+    </div>
+    <div class="status-badge" id="globalStatus">
+      <div class="dot"></div>
+      <span>Active</span>
+    </div>
+  </div>
+
+  <!-- CURRENT PAGE SCAN -->
+  <div class="section">
+    <div class="section-label">Current Page Scan</div>
+    <div class="threat-meter-card" id="meterCard">
+      <div class="scanning-bar" id="scanningBar"></div>
+      <div class="url-text" id="currentUrl">Detecting active tab...</div>
+      <div class="risk-row">
+        <span class="risk-label">Threat Level</span>
+        <span class="risk-score" id="riskScore">—<span class="unit"></span></span>
+      </div>
+      <div class="risk-bar-track">
+        <div class="risk-bar-fill" id="riskBar" style="width: 0%;"></div>
+      </div>
+      <div class="reason-text" id="reasonText">Awaiting forensic analysis...</div>
+    </div>
+  </div>
+
+  <!-- THREAT HISTORY -->
+  <div class="history-section">
+    <div class="section-label">Recent Threat Log</div>
+    <div class="history-list" id="historyList">
+      <div class="empty-state">
+        <div class="icon">🔍</div>
+        No threats recorded this session.
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <button class="btn btn-primary" id="launchDashboard">⚡ Dashboard</button>
+    <button class="btn btn-ghost" id="clearHistory">Clear Log</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
