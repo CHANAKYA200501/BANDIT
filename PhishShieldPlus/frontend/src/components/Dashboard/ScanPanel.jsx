@@ -23,9 +23,11 @@ export default function ScanPanel() {
         bodyData = { text: payload, language: "auto" };
       } else if (mode === 'Tx') {
         endpoint = '/scan-transaction';
-        // Mock parsing transaction amount from text for MVP
         const amtMatch = payload.match(/\d+/);
         bodyData = { amount: amtMatch ? parseInt(amtMatch[0]) : 500 };
+      } else if (mode === 'Breach') {
+        endpoint = '/breach-check';
+        bodyData = { email: payload };
       }
 
       const res = await fetch(`http://localhost:8000${endpoint}`, {
@@ -35,17 +37,28 @@ export default function ScanPanel() {
       });
       const data = await res.json();
       
-      // Normalize response mapping
-      const risk = data.risk_level || (data.anomaly_score * 100) || 0;
-      const explanationDict = data.explanation || data.gemini_explanation || {};
-      
-      setScanResult({
-        risk_level: Math.floor(risk),
-        text: explanationDict.explanation || "No advanced AI explanation provided.",
-        tactics: explanationDict.tactics_detected || [],
-        confidence: data.confidence || 85,
-        action: explanationDict.recommendation || "verify"
-      });
+      if (mode === 'Breach') {
+        setScanResult({
+          risk_level: data.breached ? 100 : 0,
+          text: data.breached 
+            ? `CRITICAL EXPOSURE: This identity was found in ${data.breach_count} separate dark web breaches.` 
+            : "SAFE: No known dark web breaches found for this identity.",
+          tactics: data.breached ? ["Credential Leak", "Dark Web Exposure"] : [],
+          confidence: 99,
+          action: data.breached ? "change passwords immediately" : "safe"
+        });
+      } else {
+        const risk = data.risk_level || (data.anomaly_score * 100) || 0;
+        const explanationDict = data.explanation || data.gemini_explanation || {};
+        
+        setScanResult({
+          risk_level: Math.floor(risk),
+          text: explanationDict.explanation || "No advanced AI explanation provided.",
+          tactics: explanationDict.tactics_detected || [],
+          confidence: data.confidence || 85,
+          action: explanationDict.recommendation || "verify"
+        });
+      }
       setPayload('');
     } catch (e) {
       console.error(e);
@@ -58,10 +71,13 @@ export default function ScanPanel() {
     <div className="flex flex-col gap-3 font-inter">
       <h2 className="text-lg text-neonTeal font-bold font-outfit">Multi-Modal Scan Core</h2>
       <div className="flex gap-2 mb-2">
-        {['URL', 'Text', 'Tx'].map(m => (
+        {['URL', 'Text', 'Tx', 'Breach'].map(m => (
           <button 
             key={m}
-            onClick={() => setMode(m)}
+            onClick={() => {
+              setMode(m);
+              setScanResult(null);
+            }}
             className={`flex-1 text-xs border py-1 rounded transition ${
               mode === m 
                 ? "bg-neonTeal/20 border-neonTeal text-neonTeal shadow-[0_0_8px_rgba(0,255,204,0.3)]" 
@@ -73,7 +89,15 @@ export default function ScanPanel() {
         ))}
       </div>
 
-      {mode === 'Tx' ? (
+      {mode === 'Breach' ? (
+         <input 
+            type="email" 
+            value={payload}
+            onChange={(e) => setPayload(e.target.value)}
+            placeholder="Enter email address (e.g. test@example.com)..." 
+            className="w-full bg-darkBg border border-gray-700 px-3 py-3 rounded focus:outline-none focus:border-neonTeal text-sm tracking-wide" 
+         />
+      ) : mode === 'Tx' ? (
          <input 
             type="number" 
             value={payload}

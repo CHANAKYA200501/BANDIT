@@ -18,14 +18,14 @@ export default function AlertFeed() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 key={feed.timestamp + idx} 
-                className="p-3 bg-darkBg border border-dangerRed rounded shadow-[0_0_10px_rgba(226,75,74,0.2)]"
+                className="p-3 bg-darkBg border-b border-gray-700/50 hover:bg-gray-800/50 transition duration-300"
               >
-                <div className="text-xs text-gray-400 mb-1 flex justify-between">
-                  <span>{new Date(feed.timestamp * 1000).toLocaleTimeString()}</span>
-                  <span className="text-dangerRed">{feed.source}</span>
+                <div className="text-xs text-gray-500 mb-1 flex justify-between tracking-wider">
+                  <span>{feed.source}</span>
+                  <span className="font-bold">{feed.geo || 'US'}</span>
                 </div>
-                <div className="font-bold text-gray-100 truncate">{feed.domain}</div>
-                <div className="text-sm mt-1 uppercase text-xs text-dangerRed font-bold bg-dangerRed/10 inline-block px-1 rounded">{feed.risk_type}</div>
+                <div className="font-bold text-dangerRed truncate mb-1">{feed.domain}</div>
+                <div className="text-xs text-gray-400">{feed.risk_type}</div>
               </motion.div>
             ))
           )}

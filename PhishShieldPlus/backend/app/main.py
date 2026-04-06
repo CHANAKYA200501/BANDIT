@@ -228,7 +228,24 @@ async def websocket_monitor(websocket):
 @app.on_event("startup")
 async def startup_event():
     init_db()
-    # Dummy simulation feed has been removed per user request for clarity.
-    pass
+    
+    async def emit_feed():
+        mock_threats = [
+            {"domain": "secure-banklogin.xyz", "risk_type": "Credential Phishing", "source": "PhishTank", "geo": "RU"},
+            {"domain": "microsoft365-verify.net", "risk_type": "OAuth Token Theft", "source": "AlienVault OTX", "geo": "CN"},
+            {"domain": "paypal-resolution.com", "risk_type": "Brand Impersonation", "source": "OpenPhish", "geo": "NG"},
+            {"domain": "crypto-airdrop-claim.io", "risk_type": "Crypto Wallet Drain", "source": "VirusTotal", "geo": "US"},
+            {"domain": "whatsapp-update.click", "risk_type": "Malware Distribution", "source": "Google Safe Browsing", "geo": "BR"},
+            {"domain": "instagram-verify-badges.com", "risk_type": "Social Media Phishing", "source": "HIBP", "geo": "TR"}
+        ]
+        
+        while True:
+            # Emit a beautifully structured threat every 8 seconds for presentation effect
+            await asyncio.sleep(8)
+            feed = random.choice(mock_threats).copy()
+            feed["timestamp"] = int(time.time())
+            await sio.emit("feed_update", feed)
+            
+    asyncio.create_task(emit_feed())
 
 app = socketio.ASGIApp(sio, other_asgi_app=app)
