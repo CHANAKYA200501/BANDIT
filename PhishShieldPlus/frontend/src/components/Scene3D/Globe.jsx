@@ -57,10 +57,9 @@ function AttackDot({ position, color = "#e24b4a", size = 0.06 }) {
   );
 }
 
-export default function Globe() {
+export default function Globe({ threats = [] }) {
   const globeRef = useRef();
-  const liveThreats = useThreatStore((state) => state.liveThreats);
-
+  
   useFrame((state, delta) => {
     if (globeRef.current) {
       globeRef.current.rotation.y += delta * 0.08;
@@ -69,13 +68,23 @@ export default function Globe() {
 
   const targetPos = latLngToVec3(TARGET_NODE.lat, TARGET_NODE.lng, 2.05);
 
-  const attackData = useMemo(() => {
-    return ATTACK_NODES.map((node) => {
-      const pos = latLngToVec3(node.lat, node.lng, 2.05);
+  const activeThreats = useMemo(() => {
+    return threats.slice(0, 10).map((threat, idx) => {
+      // If threat has geo [lat, lng], use it; otherwise use a deterministic "random" node based on index
+      const geo = (threat.geo && threat.geo[0] !== 0) 
+        ? { lat: threat.geo[0], lng: threat.geo[1] }
+        : ATTACK_NODES[idx % ATTACK_NODES.length];
+      
+      const pos = latLngToVec3(geo.lat, geo.lng, 2.05);
       const arc = generateArc(pos, targetPos);
-      return { pos, arc, label: node.label };
+      return { 
+        pos, 
+        arc, 
+        color: threat.risk_level > 80 ? "#e24b4a" : "#f1c40f",
+        id: threat.id || idx 
+      };
     });
-  }, []);
+  }, [threats]);
 
   return (
     <group ref={globeRef}>
@@ -99,25 +108,19 @@ export default function Globe() {
         />
       </Sphere>
 
-      {/* Ring / equator glow */}
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[2.3, 2.35, 64]} />
-        <meshBasicMaterial color="#1a3a6a" transparent opacity={0.15} side={THREE.DoubleSide} />
-      </mesh>
-
       {/* Target dot (NYC) */}
       <AttackDot position={[targetPos.x, targetPos.y, targetPos.z]} color="#3af0e0" size={0.08} />
 
-      {/* Attack source dots + arcs */}
-      {attackData.map((node, idx) => (
-        <group key={idx}>
-          <AttackDot position={[node.pos.x, node.pos.y, node.pos.z]} color="#e24b4a" />
+      {/* Dynamic Threat Arcs & Dots */}
+      {activeThreats.map((threat) => (
+        <group key={threat.id}>
+          <AttackDot position={[threat.pos.x, threat.pos.y, threat.pos.z]} color={threat.color} />
           <Line
-            points={node.arc}
-            color="#e24b4a"
-            lineWidth={1.5}
+            points={threat.arc}
+            color={threat.color}
+            lineWidth={1.2}
             transparent
-            opacity={0.6}
+            opacity={0.4}
           />
         </group>
       ))}

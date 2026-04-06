@@ -15,6 +15,8 @@ import re
 import math
 import hashlib
 import logging
+import aiohttp
+from faker import Faker
 
 from sqlalchemy.orm import Session
 from app.database import get_db, init_db
@@ -35,6 +37,20 @@ try:
     account = Account.from_key(private_key)
 except Exception:
     account = None
+
+# --- Offensive AI Generator ---
+fake = Faker('en_IN')
+def generate_synthetic_identity():
+    bank_options = ["HDFC Bank", "ICICI Bank", "State Bank of India", "Axis Bank", "Kotak Mahindra"]
+    return {
+        "full_name": fake.name(),
+        "email": fake.email(),
+        "password": fake.password(length=12, special_chars=True, digits=True, upper_case=True, lower_case=True),
+        "phone": f"+91 {fake.msisdn()[3:]}",
+        "2fa_otp": f"{random.randint(100000, 999999)}",
+        "mock_bank": random.choice(bank_options),
+        "timestamp": int(time.time() * 1000)
+    }
 
 # --- Dynamic Confidence ---
 def compute_confidence(intel_results: dict, gemini_eval: dict) -> int:
@@ -295,26 +311,65 @@ async def blockchain_log(payload: BlockchainLogRequest):
     await sio.emit("chain_event", {"tx_hash": "0xMockHash123", "input_hash": payload.input_hash, "risk_score": payload.risk_score, "block": 100})
     return {"tx_hash": "0xMockHash123", "ipfs_cid": "QmMockCID", "block_number": 100}
 
+active_poison_task = None
+
+@app.post("/mock-scammer-db")
+async def mock_scammer_db(data: dict):
+    # ... (same)
+    await sio.emit("scammer_recv", {
+        "identity": data.get("full_name"),
+        "bank": data.get("mock_bank"),
+        "timestamp": data.get("timestamp")
+    })
+    return {"status": "recorded", "id": random.randint(1000, 9999)}
+
+@app.post("/terminate-poison")
+async def terminate_poison():
+    global active_poison_task
+    if active_poison_task and not active_poison_task.done():
+        active_poison_task.cancel()
+        await sio.emit("poison_progress", {"status": "terminated", "message": "Campaign manually stopped by analyst."})
+        return {"status": "terminated"}
+    return {"status": "no_active_campaign"}
+
 @app.post("/offensive-poison")
 async def offensive_poison(req: PoisonPillRequest):
-    """
-    Simulates a Poison Pill attack by injecting synthetic identities.
-    """
-    async def generate_poison_logs():
-        identities = ["Admin_Honey_Pot", "Support_Fake_01", "Security_Trap_Global", "Test_User_Alpha", "Legacy_Admin_Mock"]
-        for i in range(req.injection_count):
-            if i % 25 == 0:
-                await sio.emit("poison_progress", {
-                    "count": i,
-                    "target": req.target_url,
-                    "status": "injecting",
-                    "identity": f"{random.choice(identities)}_{i}"
-                })
-                await asyncio.sleep(0.1)
-        await sio.emit("poison_progress", {"count": req.injection_count, "target": req.target_url, "status": "completed"})
+    global active_poison_task
+    
+    # Cancel previous if running
+    if active_poison_task and not active_poison_task.done():
+        active_poison_task.cancel()
 
-    asyncio.create_task(generate_poison_logs())
-    return {"status": "Offensive campaign initialized", "target": req.target_url}
+    target = req.target_url
+    if not target or "localhost" in target or "127.0.0.1" in target:
+        target = f"http://localhost:{os.getenv('PORT', '8000')}/mock-scammer-db"
+
+    async def run_offensive_campaign():
+        try:
+            async with aiohttp.ClientSession() as session:
+                for i in range(req.injection_count):
+                    identity = generate_synthetic_identity()
+                    try:
+                        async with session.post(target, json=identity, timeout=2) as resp:
+                            if resp.status == 200:
+                                if i % 10 == 0 or i == req.injection_count - 1:
+                                    await sio.emit("poison_progress", {
+                                        "count": i + 1,
+                                        "total": req.injection_count,
+                                        "target": target,
+                                        "status": "injecting",
+                                        "identity": identity["email"]
+                                    })
+                    except Exception as e:
+                        logger.error(f"Injection failed: {e}")
+                    await asyncio.sleep(0.05)
+            await sio.emit("poison_progress", {"count": req.injection_count, "total": req.injection_count, "target": target, "status": "completed"})
+        except asyncio.CancelledError:
+            logger.info("Offensive campaign terminated manually.")
+            raise
+
+    active_poison_task = asyncio.create_task(run_offensive_campaign())
+    return {"status": "Offensive campaign initialized", "target": target}
 
 @sio.on("connect")
 async def connect(sid, environ):

@@ -12,6 +12,7 @@ export const useThreatStore = create((set) => ({
   },
   killSwitchTriggered: null,
   poisonLogs: [],
+  scammerRecords: [],
   offensiveMode: false,
 
   addThreat: (threat) => set((state) => ({
@@ -39,6 +40,12 @@ export const useThreatStore = create((set) => ({
   })),
 
   clearPoisonLogs: () => set({ poisonLogs: [] }),
+
+  addScammerRecord: (record) => set((state) => ({
+    scammerRecords: [record, ...state.scammerRecords].slice(0, 100)
+  })),
+
+  clearScammerRecords: () => set({ scammerRecords: [] }),
 
   setOffensiveMode: (mode) => set({ offensiveMode: mode })
 }));

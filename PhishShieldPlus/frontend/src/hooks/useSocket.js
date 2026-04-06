@@ -5,7 +5,7 @@ import { useThreatStore } from '../store/threatStore';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
 export function useSocket() {
-  const { addThreat, addFeed, addChainEvent, setBreach, setStats, triggerKillSwitch, addPoisonLog } = useThreatStore();
+  const { addThreat, addFeed, addChainEvent, setBreach, setStats, triggerKillSwitch, addPoisonLog, addScammerRecord } = useThreatStore();
 
   useEffect(() => {
     const socket = io(BACKEND_URL, { transports: ["websocket"] });
@@ -19,7 +19,8 @@ export function useSocket() {
     socket.on("stats_update", (data) => setStats(data));
     socket.on("kill_switch", (data) => triggerKillSwitch(data));
     socket.on("poison_progress", (data) => addPoisonLog(data));
+    socket.on("scammer_recv", (data) => addScammerRecord(data));
 
     return () => socket.disconnect();
-  }, [addThreat, addFeed, addChainEvent, setBreach, setStats, triggerKillSwitch, addPoisonLog]);
+  }, [addThreat, addFeed, addChainEvent, setBreach, setStats, triggerKillSwitch, addPoisonLog, addScammerRecord]);
 }
