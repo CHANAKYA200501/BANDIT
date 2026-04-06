@@ -17,7 +17,7 @@ export default function OpsCenter() {
     <div className="flex-1 flex overflow-hidden relative w-full h-full">
       {/* 3D Globe Background */}
       <div className="absolute inset-0 z-0 pointer-events-auto">
-        <Canvas camera={{ position: [0, 0, 7], fov: 60 }}>
+        <Canvas camera={{ position: [0, 0, 4.2], fov: 50 }}>
           <ambientLight intensity={1.2} />
           <pointLight position={[10, 10, 10]} intensity={1.5} />
           <pointLight position={[-10, -10, -10]} intensity={2} color="#66fcf1" />

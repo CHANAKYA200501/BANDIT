@@ -126,6 +126,8 @@ function blockTab(tabId, url, forensicData) {
     action: "BLOCK_PAGE",
     url: url,
     risk: forensicData.risk_level,
-    reason: forensicData.reason || forensicData.explanation?.explanation || "High-confidence phishing detection triggered by autonomous AI agent."
+    reason: forensicData.reason || forensicData.explanation?.explanation || "High-confidence phishing detection triggered by autonomous AI agent.",
+    tactics: forensicData.explanation?.tactics_detected || [],
+    severity: forensicData.explanation?.severity || "critical"
   });
 }

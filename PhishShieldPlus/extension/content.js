@@ -1,10 +1,10 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "BLOCK_PAGE") {
-    injectPhishShieldBlock(request.url, request.risk, request.reason);
+    injectPhishShieldBlock(request.url, request.risk, request.reason, request.tactics, request.severity);
   }
 });
 
-function injectPhishShieldBlock(url, risk, reason) {
+function injectPhishShieldBlock(url, risk, reason, tactics = [], severity = "critical") {
   // Prevent duplicate injection
   if (document.getElementById("phishshield-interception-layer")) return;
 
@@ -42,13 +42,19 @@ function injectPhishShieldBlock(url, risk, reason) {
       </p>
       
       <div style="background: rgba(0,0,0,0.4); border: 1px solid #374151; border-radius: 12px; padding: 20px; margin-bottom: 32px; text-align: left;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span style="font-size: 10px; font-weight: 800; color: #6b7280; text-transform: uppercase; letter-spacing: 0.1em;">Threat Analysis</span>
-          <span style="font-size: 11px; font-family: monospace; color: #e24b4a; font-weight: bold;">RISK: ${risk}%</span>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #374151; padding-bottom: 12px; align-items: center;">
+          <span style="font-size: 11px; font-weight: 800; color: #6b7280; text-transform: uppercase; letter-spacing: 0.1em;">Real-Time AI Forensic Report</span>
+          <span style="font-size: 10px; padding: 4px 8px; border-radius: 6px; font-family: monospace; color: #fff; font-weight: bold; background: #e24b4a;">SEVERITY: ${severity.toUpperCase()}</span>
         </div>
-        <p style="font-size: 13px; color: #d1d5db; margin: 0; line-height: 1.5; font-family: monospace;">
+        <p style="font-size: 13px; color: #d1d5db; margin: 0 0 16px 0; line-height: 1.5; font-family: monospace;">
           ${reason}
         </p>
+        
+        ${tactics && tactics.length > 0 ? `
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          ${tactics.map(t => `<span style="font-size: 10px; border: 1px solid rgba(226,75,74,0.4); color: #e24b4a; padding: 4px 10px; border-radius: 6px; font-weight: bold; background: rgba(226,75,74,0.05); text-transform: uppercase;">${t}</span>`).join('')}
+        </div>
+        ` : ''}
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
