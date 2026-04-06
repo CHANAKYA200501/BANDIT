@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 
 export default function Scanner() {
   return (
-    <div className="flex-1 flex flex-col p-6 overflow-hidden">
+    <div className="flex-1 flex flex-col p-6 w-full h-full overflow-hidden">
       <header className="mb-6">
         <h2 className="text-2xl font-outfit font-bold text-white flex items-center gap-3">
           <span className="p-2 bg-neonTeal/10 rounded-lg text-neonTeal border border-neonTeal/20">

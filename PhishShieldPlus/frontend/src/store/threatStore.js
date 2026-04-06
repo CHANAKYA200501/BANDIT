@@ -19,6 +19,9 @@ export const useThreatStore = create((set) => ({
     liveThreats: [threat, ...state.liveThreats].slice(0, 50)
   })),
 
+  setLiveThreats: (threats) => set({ liveThreats: threats }),
+  setChainEvents: (events) => set({ chainEvents: events }),
+
   addFeed: (feed) => set((state) => ({
     feedUpdates: [feed, ...state.feedUpdates].slice(0, 100)
   })),

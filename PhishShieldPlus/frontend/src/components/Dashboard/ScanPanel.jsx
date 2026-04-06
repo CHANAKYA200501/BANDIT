@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Globe, 
+  FileText, 
+  Activity, 
+  ShieldAlert, 
+  Search,
+  CheckCircle2,
+  AlertTriangle,
+  Fingerprint
+} from 'lucide-react';
 
 export default function ScanPanel() {
   const [payload, setPayload] = useState('');
@@ -56,9 +66,8 @@ export default function ScanPanel() {
         const risk = data.risk_level || Math.round((data.anomaly_score || 0) * 100);
         const explanationDict = data.explanation || {};
         const severity = risk > 70 ? "HIGH" : risk > 40 ? "MEDIUM" : "LOW";
-        const sevColor = risk > 70 ? "text-dangerRed bg-dangerRed/20" : risk > 40 ? "text-warningYellow bg-warningYellow/20" : "text-neonTeal bg-neonTeal/20";
+        const sevColor = risk > 70 ? "text-red-400" : risk > 40 ? "text-yellow-400" : "text-accent-primary";
         
-        // Use actual features returned by the IsolationForest backend
         const feats = data.features || {};
         setScanResult({
           type: 'tx',
@@ -86,7 +95,7 @@ export default function ScanPanel() {
           text: explanationDict.explanation || "No advanced AI explanation provided.",
           tactics: explanationDict.tactics_detected || [],
           confidence: data.confidence || 85,
-          action: explanationDict.recommendation || "verify"
+          action: explanationDict.recommendation || "block"
         });
       }
       if (mode !== 'Tx') setPayload('');
@@ -97,186 +106,202 @@ export default function ScanPanel() {
     }
   };
 
-  const modeLabels = { URL: '⊙ URL', Text: '⊙ Text', Tx: '⊙ Txn', Breach: '⊙ Breach' };
+  const modes = [
+    { id: 'URL', label: 'URL Scan', icon: Globe },
+    { id: 'Text', label: 'Content', icon: FileText },
+    { id: 'Tx', label: 'Transaction', icon: Activity },
+    { id: 'Breach', label: 'Identity', icon: Fingerprint },
+  ];
 
   return (
-    <div className="flex flex-col gap-3 font-inter">
-      {/* Mode Tabs */}
-      <div className="flex gap-1 border-b border-gray-700 pb-2">
-        {['URL', 'Text', 'Tx', 'Breach'].map(m => (
+    <div className="flex flex-col gap-6">
+      {/* Precision Tabs */}
+      <div className="flex gap-1 p-1 bg-white/[0.03] rounded-2xl border border-white/5">
+        {modes.map(m => (
           <button
-            key={m}
-            onClick={() => { setMode(m); setScanResult(null); }}
-            className={`px-3 py-1.5 text-xs rounded-t transition font-bold tracking-wide ${
-              mode === m
-                ? "text-neonTeal border-b-2 border-neonTeal bg-neonTeal/5"
-                : "text-gray-500 hover:text-gray-300"
+            key={m.id}
+            onClick={() => { setMode(m.id); setScanResult(null); }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 ${
+              mode === m.id
+                ? "bg-accent-primary/10 text-accent-primary border border-accent-primary/20 shadow-lg"
+                : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
             }`}
           >
-            {modeLabels[m]}
+            <m.icon size={14} />
+            <span className="hidden sm:inline">{m.label}</span>
           </button>
         ))}
       </div>
 
-      {/* Tx Mode: Split fields matching reference image */}
-      {mode === 'Tx' ? (
-        <div className="flex flex-col gap-3">
-          <div className="text-xs text-gray-400 font-bold uppercase tracking-wider">Transaction Anomaly Detection</div>
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label className="text-[10px] text-gray-500 uppercase tracking-wider mb-1 block">Amount (₹)</label>
+      {/* Forensic Input Area */}
+      <div className="space-y-4">
+        {mode === 'Tx' ? (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 ml-2">Value (INR)</label>
               <input
                 type="number"
                 value={txAmount}
                 onChange={(e) => setTxAmount(e.target.value)}
-                placeholder="10000000"
-                className="w-full bg-darkBg border border-gray-700 px-3 py-2.5 rounded focus:outline-none focus:border-neonTeal text-sm font-mono"
+                placeholder="0.00"
+                className="w-full bg-white/[0.02] border border-white/10 px-4 py-4 rounded-2xl focus:outline-none focus:border-accent-primary/40 focus:bg-accent-primary/[0.02] text-sm font-mono transition-all"
               />
             </div>
-            <div className="flex-1">
-              <label className="text-[10px] text-gray-500 uppercase tracking-wider mb-1 block">Velocity (txn/hr)</label>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 ml-2">Velocity Threshold</label>
               <input
                 type="number"
                 value={txVelocity}
                 onChange={(e) => setTxVelocity(e.target.value)}
-                placeholder="2"
-                className="w-full bg-darkBg border border-gray-700 px-3 py-2.5 rounded focus:outline-none focus:border-neonTeal text-sm font-mono"
+                placeholder="TXN/HR"
+                className="w-full bg-white/[0.02] border border-white/10 px-4 py-4 rounded-2xl focus:outline-none focus:border-accent-primary/40 focus:bg-accent-primary/[0.02] text-sm font-mono transition-all"
               />
             </div>
           </div>
-        </div>
-      ) : mode === 'Breach' ? (
-        <input
-          type="email"
-          value={payload}
-          onChange={(e) => setPayload(e.target.value)}
-          placeholder="Enter email address (e.g. test@example.com)..."
-          className="w-full bg-darkBg border border-gray-700 px-3 py-3 rounded focus:outline-none focus:border-neonTeal text-sm tracking-wide"
-        />
-      ) : mode === 'Text' ? (
-        <textarea
-          value={payload}
-          onChange={(e) => setPayload(e.target.value)}
-          placeholder="Paste suspicious SMS, Email, or raw text..."
-          className="w-full h-20 resize-none bg-darkBg border border-gray-700 px-3 py-3 rounded focus:outline-none focus:border-neonTeal text-sm tracking-wide"
-        />
-      ) : (
-        <input
-          type="text"
-          value={payload}
-          onChange={(e) => setPayload(e.target.value)}
-          placeholder="Enter URL to scan..."
-          className="w-full bg-darkBg border border-gray-700 px-3 py-3 rounded focus:outline-none focus:border-neonTeal text-sm tracking-wide"
-        />
-      )}
-
-      <button
-        onClick={handleScan}
-        disabled={loading}
-        className="w-full bg-neonTeal text-darkBg font-bold py-3 rounded hover:bg-mutedTeal transition cursor-pointer text-sm shadow-[0_0_10px_rgba(0,255,204,0.3)] disabled:opacity-50 flex items-center justify-center gap-2"
-      >
-        {loading ? "⟳ Analyzing..." : mode === 'Tx' ? "⊞ Analyze Transaction" : `Scan ${mode} Payload`}
-      </button>
-
-      {/* Results */}
-      <AnimatePresence>
-        {scanResult && scanResult.type === 'tx' && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-2 flex flex-col gap-3">
-            {/* Anomaly Header */}
-            <div className={`p-3 rounded border flex flex-col gap-2 ${
-              scanResult.risk_level > 70 ? "bg-dangerRed/10 border-dangerRed/40" :
-              scanResult.risk_level > 40 ? "bg-warningYellow/10 border-warningYellow/40" :
-              "bg-neonTeal/10 border-neonTeal/30"
-            }`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-warningYellow text-sm">⚠</span>
-                  <span className="text-sm font-bold">ANOMALOUS</span>
-                </div>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded ${scanResult.sevColor}`}>
-                  {scanResult.severity} — {scanResult.risk_level}%
-                </span>
-              </div>
-              {/* Progress bar */}
-              <div className="w-full bg-gray-800 rounded-full h-2">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${scanResult.risk_level}%` }}
-                  transition={{ duration: 0.8 }}
-                  className={`h-2 rounded-full ${
-                    scanResult.risk_level > 70 ? "bg-dangerRed" :
-                    scanResult.risk_level > 40 ? "bg-warningYellow" :
-                    "bg-neonTeal"
-                  }`}
-                />
-              </div>
-              <div className="text-xs text-gray-400">
-                Anomaly Score: <span className="text-white font-mono font-bold">{scanResult.anomaly_score?.toFixed(4)}</span> · IsolationForest-v1
-              </div>
+        ) : (
+          <div className="relative group">
+            <div className="absolute left-5 top-5 text-gray-500 group-focus-within:text-accent-primary transition-colors">
+              <Search size={18} />
             </div>
-
-            {/* Features Table */}
-            <div className="p-3 rounded border border-gray-700 bg-darkBg">
-              <div className="text-[10px] uppercase text-gray-500 font-bold tracking-wider mb-2">Features</div>
-              <div className="flex flex-col gap-1.5">
-                {Object.entries(scanResult.features).map(([key, val]) => (
-                  <div key={key} className="flex justify-between text-xs">
-                    <span className="text-gray-400">{key.replace(/_/g, ' ')}</span>
-                    <span className="text-white font-mono font-bold">{val}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Explanation */}
-            <div className="p-3 rounded border border-gray-700 bg-darkBg">
-              <div className="text-[10px] uppercase text-gray-500 font-bold tracking-wider mb-2">Explanation</div>
-              <p className="text-xs text-gray-300 leading-relaxed">{scanResult.text}</p>
-            </div>
-          </motion.div>
+            {mode === 'Text' ? (
+              <textarea
+                value={payload}
+                onChange={(e) => setPayload(e.target.value)}
+                placeholder="Inject suspicious text payload for forensic analysis..."
+                className="w-full h-28 bg-white/[0.02] border border-white/10 pl-14 pr-4 py-4 rounded-2xl focus:outline-none focus:border-accent-primary/40 focus:bg-accent-primary/[0.02] text-sm resize-none transition-all placeholder:text-gray-700 font-medium"
+              />
+            ) : (
+              <input
+                type={mode === 'Breach' ? 'email' : 'text'}
+                value={payload}
+                onChange={(e) => setPayload(e.target.value)}
+                placeholder={mode === 'Breach' ? "Target identity (Email)..." : "Analyze remote origin (URL)..."}
+                className="w-full bg-white/[0.02] border border-white/10 pl-14 pr-4 py-5 rounded-2xl focus:outline-none focus:border-accent-primary/40 focus:bg-accent-primary/[0.02] text-sm transition-all placeholder:text-gray-700 font-medium"
+              />
+            )}
+          </div>
         )}
 
-        {scanResult && scanResult.type !== 'tx' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`mt-3 p-4 rounded border flex flex-col gap-2 backdrop-blur-md ${
-              scanResult.risk_level > 80 ? "bg-dangerRed/10 border-dangerRed/50" :
-              scanResult.risk_level > 40 ? "bg-warningYellow/10 border-warningYellow/50" :
-              "bg-neonTeal/10 border-neonTeal/30"
-            }`}
-          >
-            <div className="flex justify-between items-center border-b border-gray-700 pb-2 mb-1">
-              <span className="text-xs uppercase tracking-wider text-gray-400 font-bold">Threat Intelligence</span>
-              <span className={`font-bold font-outfit ${scanResult.risk_level > 80 ? 'text-dangerRed' : 'text-neonTeal'}`}>
-                Risk: {scanResult.risk_level}%
-              </span>
+        <button
+          onClick={handleScan}
+          disabled={loading}
+          className="w-full h-14 bg-accent-primary text-black font-black uppercase tracking-[0.2em] text-xs rounded-2xl hover:scale-[1.01] active:scale-[0.98] transition-all duration-300 shadow-[0_10px_30px_rgba(102,252,241,0.2)] disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-3"
+        >
+          {loading ? (
+            <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+          ) : (
+            <>
+              <Activity size={16} strokeWidth={3} />
+              Commit Forensic Scan
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Intelligence Reports */}
+      <AnimatePresence>
+        {scanResult && (
+          <div className="space-y-4">
+            {/* Header / Summary */}
+            <div className={`p-5 rounded-3xl border animate-in fade-in slide-in-from-bottom-4 duration-500 ${
+              scanResult.risk_level > 80 ? "bg-red-400/5 border-red-400/20" :
+              scanResult.risk_level > 40 ? "bg-yellow-400/5 border-yellow-400/20" :
+              "bg-accent-primary/5 border-accent-primary/20"
+            }`}>
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-xl ${
+                    scanResult.risk_level > 80 ? "bg-red-400/10 text-red-400" :
+                    scanResult.risk_level > 40 ? "bg-yellow-400/10 text-yellow-400" :
+                    "bg-accent-primary/10 text-accent-primary"
+                  }`}>
+                    {scanResult.risk_level > 80 ? <ShieldAlert size={20} /> : <CheckCircle2 size={20} />}
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-500 mb-0.5">Threat Diagnostic</h3>
+                    <p className={`text-sm font-black ${
+                      scanResult.risk_level > 80 ? "text-red-400" :
+                      scanResult.risk_level > 40 ? "text-yellow-400" :
+                      "text-accent-primary"
+                    }`}>
+                      {scanResult.risk_level > 80 ? "CRITICAL THREAT DETECTED" : 
+                       scanResult.risk_level > 40 ? "SUSPICIOUS ACTIVITY FLAG" : 
+                       "CLEAN ORIGIN VERIFIED"}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-gray-600 font-black uppercase tracking-widest block mb-1">Risk Quotient</span>
+                  <div className={`text-2xl font-black font-mono leading-none ${
+                    scanResult.risk_level > 80 ? "text-red-400" :
+                    scanResult.risk_level > 40 ? "text-yellow-400" :
+                    "text-accent-primary"
+                  }`}>
+                    {scanResult.risk_level}%
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress Detail */}
+              <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden mb-2">
+                <div 
+                  className={`h-full transition-all duration-1000 ease-out ${
+                    scanResult.risk_level > 80 ? "bg-red-400" :
+                    scanResult.risk_level > 40 ? "bg-yellow-400" :
+                    "bg-accent-primary"
+                  }`}
+                  style={{ width: `${scanResult.risk_level}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] text-gray-500 font-bold uppercase py-1">
+                <span>Diagnostic Accuracy: {scanResult.confidence}%</span>
+                <span>Agentic Logic v2.0</span>
+              </div>
             </div>
-            <p className="text-sm text-gray-200 leading-relaxed">{scanResult.text}</p>
-            {(scanResult.tactics || []).length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {scanResult.tactics.map((tactic, idx) => (
-                  <span key={idx} className="bg-darkBg border border-gray-600 rounded px-2 py-1 text-[10px] text-gray-300">{tactic}</span>
-                ))}
+
+            {/* Analysis Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-5 glass-panel rounded-3xl border border-white/5 space-y-3">
+                <div className="flex items-center gap-2 text-gray-500">
+                  <FileText size={14} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">AI Intelligence</span>
+                </div>
+                <p className="text-xs text-gray-300 leading-relaxed font-medium">
+                  {scanResult.text}
+                </p>
+              </div>
+
+              <div className="p-5 glass-panel rounded-3xl border border-white/5 space-y-4">
+                <div className="flex items-center gap-2 text-gray-500">
+                  <Fingerprint size={14} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Identified Markers</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(scanResult.tactics || ["Zero Anomalies"]).map((t, i) => (
+                    <span key={i} className="px-2 py-1 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black text-gray-400 uppercase tracking-wider">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Offensive Posture */}
+            {scanResult.risk_level > 75 && mode === 'URL' && (
+              <div className="p-4 rounded-2xl bg-red-400/10 border border-red-400/20 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="text-red-400 animate-pulse" size={18} />
+                  <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Operational Alert: Interdiction Recommended</span>
+                </div>
+                <button 
+                  onClick={() => window.location.hash = '/offensive'}
+                  className="px-4 py-2 bg-red-500 text-black text-[10px] font-black uppercase tracking-wider rounded-xl hover:bg-red-400 transition-colors"
+                >
+                  Engage offensive retaliation
+                </button>
               </div>
             )}
-            <div className="mt-2 text-xs text-gray-400 border-t border-gray-700 pt-2 flex justify-between items-center">
-              <div>
-                <span>Confidence: {scanResult.confidence}%</span>
-                <span className="mx-2 opacity-30">|</span>
-                <span>Action: {scanResult.action?.toUpperCase()}</span>
-              </div>
-              
-              {scanResult.risk_level > 70 && mode === 'URL' && (
-                <button 
-                  onClick={() => window.location.hash = '/offensive'} 
-                  className="bg-dangerRed/20 hover:bg-dangerRed/40 text-dangerRed border border-dangerRed/30 px-2 py-1 rounded text-[10px] font-bold transition-all animate-pulse"
-                >
-                  ENGAGE POISON PILL
-                </button>
-              )}
-            </div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

@@ -14,7 +14,7 @@ export default function OpsCenter() {
   const lng = latestThreat.geo?.[1] || 0;
 
   return (
-    <div className="flex-1 flex overflow-hidden relative">
+    <div className="flex-1 flex overflow-hidden relative w-full h-full">
       {/* 3D Globe Background */}
       <div className="absolute inset-0 z-0 pointer-events-auto">
         <Canvas camera={{ position: [0, 0, 7], fov: 60 }}>
@@ -27,43 +27,51 @@ export default function OpsCenter() {
         </Canvas>
       </div>
 
-      {/* HUD Telemetry Labels */}
-      <div className="absolute bottom-6 left-6 z-10 pointer-events-none flex flex-col gap-3">
+      {/* Institutional HUD Telemetry */}
+      <div className="absolute bottom-8 left-8 z-10 pointer-events-none flex flex-col gap-4">
         <motion.div 
-          initial={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
-          className="bg-black/60 backdrop-blur-md border border-gray-800 px-4 py-3 rounded-lg flex flex-col gap-2 min-w-[200px]"
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="glass-card px-6 py-5 rounded-3xl flex flex-col gap-4 min-w-[280px]"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-neonTeal animate-pulse shadow-[0_0_8px_rgba(0,255,204,1)]"></div>
-            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">Live Telemetry</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-accent-primary animate-pulse shadow-[0_0_12px_rgba(102,252,241,1)]"></div>
+              <span className="text-[10px] text-accent-primary font-black uppercase tracking-[0.3em]">Live Geostat</span>
+            </div>
+            <span className="text-[9px] text-gray-500 font-mono">RC-Alpha/04</span>
           </div>
-          <div className="space-y-1">
-            <div className="flex justify-between text-[11px]">
-              <span className="text-gray-500 uppercase tracking-widest">Lat:</span>
-              <span className="text-neonTeal font-mono font-bold">{lat.toFixed(4)}</span>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <span className="text-[9px] text-gray-600 font-black uppercase tracking-widest">Latitude</span>
+              <p className="text-sm text-white font-mono font-black">{lat.toFixed(6)}</p>
             </div>
-            <div className="flex justify-between text-[11px]">
-              <span className="text-gray-500 uppercase tracking-widest">Lng:</span>
-              <span className="text-neonTeal font-mono font-bold">{lng.toFixed(4)}</span>
+            <div className="space-y-1">
+              <span className="text-[9px] text-gray-600 font-black uppercase tracking-widest">Longitude</span>
+              <p className="text-sm text-white font-mono font-black">{lng.toFixed(6)}</p>
             </div>
-            <div className="flex justify-between text-[11px]">
-              <span className="text-gray-500 uppercase tracking-widest">Target:</span>
-              <span className="text-white font-mono font-bold truncate max-w-[120px]">{latestThreat.domain || latestThreat.url || 'None'}</span>
-            </div>
+          </div>
+          
+          <div className="pt-3 border-t border-white/5 space-y-1">
+            <span className="text-[9px] text-gray-600 font-black uppercase tracking-widest">Current Active Target</span>
+            <p className="text-xs text-accent-primary font-black font-mono truncate tracking-tight">{latestThreat.domain || latestThreat.url || 'AWAITING_INGESTION'}</p>
           </div>
         </motion.div>
         
-        <div className="bg-black/40 backdrop-blur-md border border-gray-800 px-4 py-2 rounded flex items-center gap-3 w-fit">
-          <div className="w-1.5 h-1.5 rounded-full bg-neonTeal"></div>
-          <span className="text-[9px] text-gray-400 font-bold uppercase tracking-[0.2em]">Neural Shield: ACTIVE</span>
+        <div className="glass-panel px-4 py-2 rounded-2xl flex items-center gap-3 w-fit">
+          <div className="w-1.5 h-1.5 rounded-full bg-accent-primary"></div>
+          <span className="text-[9px] text-gray-400 font-black uppercase tracking-[0.25em]">Neural Defense: SYNCHRONIZED</span>
         </div>
       </div>
 
       {/* Live Threat Feed Overlay */}
-      <aside className="relative z-10 w-96 ml-auto mr-4 my-4 border border-gray-800/80 p-4 bg-panelBg/80 backdrop-blur-xl flex flex-col rounded-xl overflow-hidden shadow-2xl pointer-events-auto">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-neonTeal to-transparent opacity-30"></div>
-        <AlertFeed />
+      <aside className="relative z-10 w-[420px] ml-auto mr-8 my-8 glass-card rounded-3xl overflow-hidden flex flex-col pointer-events-auto shadow-2xl">
+        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-accent-primary/40 to-transparent opacity-50"></div>
+        <div className="p-6 flex-1 overflow-hidden flex flex-col">
+          <AlertFeed />
+        </div>
       </aside>
     </div>
   );

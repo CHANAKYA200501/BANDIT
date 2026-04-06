@@ -1,47 +1,59 @@
 import React from 'react';
 import { useThreatStore } from '../../store/threatStore';
 import { motion } from 'framer-motion';
+import { Shield, Activity, Zap, Cpu } from 'lucide-react';
 
 export default function StatsBar() {
   const stats = useThreatStore((state) => state.stats);
 
   return (
-    <div className="flex gap-6 text-[11px] font-mono items-center">
-      <div className="flex items-center gap-2">
-        <span className="text-gray-500 uppercase tracking-widest font-bold">Network Stats</span>
-        <div className="h-4 w-[1px] bg-gray-800 mx-1"></div>
+    <div className="flex gap-8 text-[11px] font-mono items-center py-1">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 px-2 py-0.5 rounded bg-accent-primary/10 border border-accent-primary/20">
+          <Cpu size={12} className="text-accent-primary" />
+          <span className="text-accent-primary font-bold uppercase tracking-wider">Neural Engine v4.2</span>
+        </div>
+        <div className="h-6 w-[1px] bg-white/10 mx-1"></div>
       </div>
       
-      <StatItem icon="⚠" label="Threats" value={stats.threats_today} color="text-dangerRed" glow="bg-dangerRed" />
-      <StatItem icon="⊙" label="Scans" value={stats.scans_total} color="text-neonTeal" glow="bg-neonTeal" />
-      <StatItem icon="⊘" label="Blocked" value={stats.blocked_count} color="text-warningYellow" glow="bg-warningYellow" />
+      <StatItem icon={Shield} label="Threats" value={stats.threats_today} color="text-red-400" />
+      <StatItem icon={Zap} label="Scans" value={stats.scans_total} color="text-accent-primary" />
+      <StatItem icon={Activity} label="Blocked" value={stats.blocked_count} color="text-yellow-400" />
       
-      <div className="flex items-center gap-2 group">
-        <span className="text-gray-500 font-bold uppercase tracking-widest">Conf:</span>
-        <span className="text-neonTeal font-bold">88%</span>
-        <div className="w-16 h-1 bg-gray-800 rounded-full overflow-hidden">
-          <motion.div 
-            initial={{ width: 0 }}
-            animate={{ width: '88%' }}
-            className="h-full bg-neonTeal"
-          />
+      <div className="h-6 w-[1px] bg-white/10 mx-1"></div>
+
+      <div className="flex items-center gap-4 group">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">Shield Confidence</span>
+          <div className="flex items-center gap-2">
+            <div className="w-24 h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: '88%' }}
+                className="h-full bg-gradient-to-r from-accent-primary to-accent-secondary shadow-[0_0_8px_rgba(102,252,241,0.5)]"
+              />
+            </div>
+            <span className="text-accent-primary font-black text-[10px]">88.4%</span>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function StatItem({ icon, label, value, color, glow }) {
+function StatItem({ icon: Icon, label, value, color }) {
   return (
     <motion.div 
       key={value}
-      initial={{ opacity: 0.5, y: -5 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex items-center gap-1.5"
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="flex flex-col gap-0.5"
     >
-      <span className={`${color} text-[10px]`}>{icon}</span>
-      <span className="text-gray-400 uppercase tracking-[0.15em] text-[10px]">{label}:</span>
-      <b className={`${color} tracking-widest shadow-sm`}>{value}</b>
+      <span className="text-[9px] text-gray-500 font-bold uppercase tracking-[0.2em]">{label}</span>
+      <div className="flex items-center gap-2">
+        <Icon size={12} className={color} />
+        <span className={`${color} font-black text-sm tracking-tighter`}>{value.toLocaleString()}</span>
+      </div>
     </motion.div>
   );
 }

@@ -4,7 +4,7 @@ import { Database, ShieldCheck, Link2, Clock } from 'lucide-react';
 
 export default function AuditLedger() {
   return (
-    <div className="flex-1 flex flex-col p-6 overflow-hidden">
+    <div className="flex-1 flex flex-col p-6 w-full h-full overflow-hidden">
       <header className="mb-6 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-outfit font-bold text-white flex items-center gap-3">

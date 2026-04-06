@@ -21,7 +21,7 @@ export default function PageTransition({ children }) {
       exit="exit"
       variants={pageVariants}
       transition={pageTransition}
-      className="flex-1 flex overflow-hidden w-full h-full"
+      className="flex flex-col w-full h-full min-h-full overflow-hidden"
     >
       {children}
     </motion.div>

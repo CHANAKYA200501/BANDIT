@@ -24,7 +24,7 @@ export default function App() {
   const clearKillSwitch = useThreatStore((state) => state.clearKillSwitch);
 
   return (
-    <div className="w-screen h-screen bg-darkBg text-white flex overflow-hidden font-inter select-none">
+    <div className="w-full h-full bg-darkBg text-white flex overflow-hidden font-inter select-none">
       
       {/* Persistent Sidebar */}
       <Sidebar />
@@ -45,7 +45,7 @@ export default function App() {
         </header>
 
         {/* Page Router with Transitions */}
-        <main className="flex-1 overflow-hidden relative flex">
+        <main className="flex-1 overflow-hidden relative">
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route path="/ops" element={<PageTransition><OpsCenter /></PageTransition>} />
