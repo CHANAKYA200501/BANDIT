@@ -24,28 +24,31 @@ export default function App() {
   const clearKillSwitch = useThreatStore((state) => state.clearKillSwitch);
 
   return (
-    <div className="w-full h-full bg-darkBg text-white flex overflow-hidden font-inter select-none">
+    <div className="app-shell">
       
-      {/* Persistent Sidebar */}
+      {/* PERSISTENT COMMAND HUB */}
       <Sidebar />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 relative">
+      {/* CORE OPERATIONAL VIEWPORT */}
+      <div className="main-container">
         
-        {/* Global Header */}
-        <header className="px-6 border-b border-gray-800/60 bg-panelBg/50 backdrop-blur-md flex justify-between items-center h-14 shrink-0 z-20">
-          <div className="flex items-center gap-4">
-             {/* Breadcrumb style indicator could go here */}
-             <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10">
-                <div className="w-1.5 h-1.5 rounded-full bg-neonTeal animate-pulse"></div>
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">System Operational</span>
+        {/* GLOBAL TELEMETRY HEADER */}
+        <header className="telemetry-header">
+          <div className="flex items-center gap-6">
+             <div className="flex items-center gap-3 px-4 py-1.5 bg-white/[0.03] rounded-full border border-white/[0.05]">
+                <div className="status-indicator text-accent-primary"></div>
+                <span className="text-[10px] font-black text-accent-primary uppercase tracking-[0.25em]">Neural Link: Active</span>
+             </div>
+             <div className="h-4 w-px bg-white/10" />
+             <div className="text-[10px] text-slate-500 font-mono tracking-tighter uppercase whitespace-nowrap">
+                SOC_ENV: PROD_v4.2.1
              </div>
           </div>
           <StatsBar />
         </header>
 
-        {/* Page Router with Transitions */}
-        <main className="flex-1 overflow-hidden relative">
+        {/* DYNAMIC MODULE ROUTER */}
+        <main className="viewport-content">
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route path="/ops" element={<PageTransition><OpsCenter /></PageTransition>} />
@@ -57,32 +60,37 @@ export default function App() {
           </AnimatePresence>
         </main>
 
-        {/* Kill Switch Overlay */}
+        {/* EMERGENCY INTERCEPTION OVERLAY */}
         <AnimatePresence>
           {killSwitchTriggered && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center bg-dangerRed/90 backdrop-blur-md p-6"
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0a0000]/90 backdrop-blur-2xl p-6"
             >
               <motion.div 
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                className="max-w-md w-full text-center p-10 bg-black/90 rounded-2xl border-2 border-dangerRed shadow-[0_0_50px_rgba(255,51,51,0.5)]"
+                initial={{ scale: 0.95, opacity: 0, y: 30 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                className="max-w-xl w-full p-12 bg-[#050000] rounded-[32px] border border-danger-primary/30 shadow-[0_0_100px_rgba(226, 75, 74, 0.15)] text-center relative overflow-hidden"
               >
-                <div className="w-20 h-20 bg-dangerRed/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-dangerRed/30">
-                  <span className="text-4xl">🛡️</span>
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-danger-primary to-transparent" />
+                
+                <div className="w-24 h-24 bg-danger-primary/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-danger-primary/20">
+                  <span className="text-5xl">🛡️</span>
                 </div>
-                <h2 className="text-3xl font-outfit font-bold mb-2 tracking-tight text-white">THREAT INTERCEPTED</h2>
-                <p className="text-dangerRed font-mono text-sm mb-8 opacity-80 break-all px-4">
-                  BLOCK_ID: {killSwitchTriggered.url}
+                
+                <h2 className="text-4xl font-outfit font-black mb-3 tracking-tighter text-white uppercase italic">Threat Intercepted</h2>
+                <p className="text-danger-primary font-mono text-xs mb-10 opacity-60 tracking-widest uppercase">
+                  Autonomous Countermeasures Deployed: {killSwitchTriggered.url}
                 </p>
+                
                 <button
                   onClick={clearKillSwitch}
-                  className="w-full bg-dangerRed text-white font-bold py-3 rounded-xl hover:bg-red-600 transition-all shadow-lg active:scale-[0.98]"
+                  className="group relative px-10 py-4 bg-danger-primary rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300"
                 >
-                  DISMISS LOCKDOWN
+                   <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity" />
+                   <span className="relative text-black font-black uppercase tracking-widest text-xs">Authorize System Reset</span>
                 </button>
               </motion.div>
             </motion.div>

@@ -1,63 +1,118 @@
+:root {
+  --accent-primary: #66fcf1;
+  --accent-secondary: #45a29e;
+  --danger-primary: #e24b4a;
+  --warning-primary: #f59e0b;
+  --success-primary: #10b981;
+  --bg-slate: #0b0f19;
+  --panel-bg: #05080d;
+  --sidebar-width: 80px;
+  --sidebar-expanded: 260px;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background-base: #0a0a0c;
-  --surface-panel: rgba(255, 255, 255, 0.03);
-  --surface-glass: rgba(13, 17, 23, 0.7);
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-active: rgba(0, 255, 204, 0.3);
-  --accent-primary: #66fcf1;
-  --accent-secondary: #45a29e;
-  --text-primary: #f0f6fc;
-  --text-muted: #8b949e;
-  --danger-soft: rgba(255, 69, 58, 0.15);
-  --warning-soft: rgba(255, 159, 10, 0.15);
+@layer base {
+  body {
+    @apply bg-[#020408] text-slate-300 font-inter antialiased overflow-hidden;
+    background-image: 
+      radial-gradient(circle at 50% 0%, rgba(102, 252, 241, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 0% 100%, rgba(69, 162, 158, 0.03) 0%, transparent 50%);
+  }
 }
 
-body, html {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  background-color: var(--background-base);
-  color: var(--text-primary);
-  font-family: 'Inter', sans-serif;
-  letter-spacing: -0.011em;
+@layer components {
+  /* MISSION CONTROL GLOBAL GRID */
+  .app-shell {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    transition: grid-template-columns 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .app-shell:has(.sidebar-expanded) {
+    grid-template-columns: var(--sidebar-expanded) 1fr;
+  }
+
+  .main-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    background: rgba(2, 4, 8, 0.5);
+  }
+
+  .telemetry-header {
+    height: 64px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    background: rgba(5, 8, 13, 0.3);
+    backdrop-filter: blur(20px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    z-index: 40;
+  }
+
+  .viewport-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 40px;
+    scroll-behavior: smooth;
+  }
+
+  /* CLINICAL DESIGN SYSTEM */
+  .clinical-panel {
+    @apply bg-white/[0.01] backdrop-blur-3xl border border-white/[0.03] rounded-[32px] overflow-hidden shadow-2xl;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  .glass-card {
+    @apply bg-white/[0.02] border border-white/[0.05] shadow-xl transition-all duration-500 backdrop-blur-xl;
+  }
+
+  .neon-glow-cyan { text-shadow: 0 0 10px rgba(102, 252, 241, 0.5); }
+  .neon-glow-red { text-shadow: 0 0 10px rgba(226, 75, 74, 0.5); }
+
+  .status-indicator {
+    @apply relative flex h-2 w-2;
+    &::after { @apply animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75; content: ''; }
+    &::before { @apply relative inline-flex rounded-full h-2 w-2 bg-current; content: ''; }
+  }
 }
 
-h1, h2, h3, .font-outfit {
-  font-family: 'Outfit', sans-serif;
-}
-
-/* Glassmorphism Utilities */
-.glass-panel {
-  background: var(--surface-panel);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border-subtle);
-}
-
-.glass-card {
-  background: var(--surface-glass);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--border-subtle);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-
-.neon-glow {
-  box-shadow: 0 0 15px var(--border-active);
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--border-subtle);
+/* CUSTOM SCROLLBARS */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
+
+@layer utilities {
+  .hover-trigger:hover * {
+    @apply text-white transition-colors duration-300;
+  }
+  .text-high-vis {
+    @apply text-white font-bold;
+  }
+  .text-glow-hover {
+    @apply transition-all duration-300;
+  }
+  .text-glow-hover:hover {
+    @apply text-white scale-[1.02];
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+  }
+
+  .interactive-text {
+    @apply text-slate-500 hover:text-accent-primary transition-colors duration-300 cursor-pointer;
+  }
 }

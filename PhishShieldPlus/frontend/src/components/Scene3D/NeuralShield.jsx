@@ -34,8 +34,17 @@ export default function NeuralShield() {
 
   return (
     <group ref={shieldRef}>
-      <Icosahedron args={[1, 2]}>
-        <meshBasicMaterial color={shieldColor} wireframe />
+      <Icosahedron args={[1, 3]}>
+        <meshPhysicalMaterial 
+          color={shieldColor} 
+          transparent 
+          opacity={0.15} 
+          roughness={0}
+          metalness={1}
+          transmission={0.5}
+          thickness={0.5}
+          wireframe 
+        />
       </Icosahedron>
     </group>
   );

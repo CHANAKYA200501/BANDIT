@@ -14,67 +14,138 @@ export default function OpsCenter() {
   const lng = latestThreat.geo?.[1] || 0;
 
   return (
-    <div className="flex-1 flex overflow-hidden relative w-full h-full">
-      {/* 3D Globe Background */}
+    <div className="flex flex-col h-full overflow-hidden relative bg-[#020408]/30">
+      
+      {/* GLOBAL 3D TRACE LAYER */}
       <div className="absolute inset-0 z-0 pointer-events-auto">
-        <Canvas camera={{ position: [0, 0, 4.2], fov: 50 }}>
-          <ambientLight intensity={1.2} />
-          <pointLight position={[10, 10, 10]} intensity={1.5} />
+        <Canvas camera={{ position: [0, 0, 7], fov: 60 }}>
+          <ambientLight intensity={1.5} />
+          <pointLight position={[10, 10, 10]} intensity={2} />
           <pointLight position={[-10, -10, -10]} intensity={2} color="#66fcf1" />
-          <directionalLight position={[0, 0, 8]} intensity={1} />
-          <Stars radius={100} depth={50} count={3000} factor={3} saturation={0} fade speed={0.5} />
+          <directionalLight position={[0, 5, 5]} intensity={1} />
+          <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
           <Globe threats={liveThreats} />
           <NeuralShield />
-          <OrbitControls autoRotate enableZoom={false} enablePan={false} zoomSpeed={0} autoRotateSpeed={0.4} />
+          <OrbitControls enableZoom={false} enablePan={false} rotateSpeed={0.5} autoRotate={false} />
         </Canvas>
       </div>
 
-      {/* Institutional HUD Telemetry */}
-      <div className="absolute bottom-8 left-8 z-10 pointer-events-none flex flex-col gap-4">
-        <motion.div 
-          initial={{ opacity: 0, x: -30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="glass-card px-6 py-5 rounded-3xl flex flex-col gap-4 min-w-[280px]"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-2.5 h-2.5 rounded-full bg-accent-primary animate-pulse shadow-[0_0_12px_rgba(102,252,241,1)]"></div>
-              <span className="text-[10px] text-accent-primary font-black uppercase tracking-[0.3em]">Live Geostat</span>
-            </div>
-            <span className="text-[9px] text-gray-500 font-mono">RC-Alpha/04</span>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <span className="text-[9px] text-gray-600 font-black uppercase tracking-widest">Latitude</span>
-              <p className="text-sm text-white font-mono font-black">{lat.toFixed(6)}</p>
-            </div>
-            <div className="space-y-1">
-              <span className="text-[9px] text-gray-600 font-black uppercase tracking-widest">Longitude</span>
-              <p className="text-sm text-white font-mono font-black">{lng.toFixed(6)}</p>
-            </div>
-          </div>
-          
-          <div className="pt-3 border-t border-white/5 space-y-1">
-            <span className="text-[9px] text-gray-600 font-black uppercase tracking-widest">Current Active Target</span>
-            <p className="text-xs text-accent-primary font-black font-mono truncate tracking-tight">{latestThreat.domain || latestThreat.url || 'AWAITING_INGESTION'}</p>
-          </div>
-        </motion.div>
+      {/* STRATEGIC OVERLAY HUD */}
+      <div className="relative z-10 flex flex-1 w-full h-full p-8 pointer-events-none">
         
-        <div className="glass-panel px-4 py-2 rounded-2xl flex items-center gap-3 w-fit">
-          <div className="w-1.5 h-1.5 rounded-full bg-accent-primary"></div>
-          <span className="text-[9px] text-gray-400 font-black uppercase tracking-[0.25em]">Neural Defense: SYNCHRONIZED</span>
+        {/* ALPHA TELEMETRY (LEFT) */}
+        <div className="flex flex-col gap-8 w-[360px]">
+          <motion.div 
+            initial={{ opacity: 0, x: -40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, cubicBezier: [0.23, 1, 0.32, 1] }}
+            className="clinical-panel p-8 flex flex-col gap-8 bg-white/[0.01] pointer-events-auto"
+          >
+            <div className="flex items-center justify-between border-b border-white/[0.03] pb-6">
+              <div className="flex items-center gap-3">
+                <div className="status-indicator text-accent-primary" />
+                <span className="text-[10px] text-white font-black uppercase tracking-[0.4em]">Telemetry_Alpha</span>
+              </div>
+              <span className="text-[8px] text-accent-primary/40 font-mono font-black tracking-widest uppercase italic">Node_Sync</span>
+            </div>
+
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <span className="text-[8px] text-slate-600 font-mono font-black uppercase tracking-[0.2em] italic">Geospatial_Focus</span>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white/[0.02] p-4 rounded-xl border border-white/[0.05] flex flex-col gap-1">
+                    <span className="text-[7px] text-slate-700 uppercase font-black tracking-widest italic">Lat</span>
+                    <p className="text-sm text-accent-primary font-mono font-black italic">{lat.toFixed(4)}</p>
+                  </div>
+                  <div className="bg-white/[0.02] p-4 rounded-xl border border-white/[0.05] flex flex-col gap-1">
+                    <span className="text-[7px] text-slate-700 uppercase font-black tracking-widest italic">Lng</span>
+                    <p className="text-sm text-accent-primary font-mono font-black italic">{lng.toFixed(4)}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white/[0.02] p-5 rounded-xl border border-white/[0.03] relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-accent-primary/20" />
+                <span className="text-[8px] text-slate-600 font-mono font-black uppercase tracking-[0.2em] block mb-3 italic">Active_Origin</span>
+                <p className="text-[11px] text-white font-mono font-bold truncate leading-relaxed">
+                  {latestThreat.url || "SCANNING_PERIMETER..."}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, x: -40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="glass-card px-5 py-2.5 rounded-full flex items-center gap-4 w-fit border-white/[0.05] bg-white/[0.02]"
+          >
+            <div className="status-indicator text-success-primary" />
+            <span className="text-[9px] text-slate-500 font-black uppercase tracking-[0.3em] font-mono">Shield_Core: Optimized</span>
+          </motion.div>
         </div>
+
+        <div className="flex-1"></div>
+
+        {/* GAMMA FEED (RIGHT) */}
+        <aside className="w-[480px] flex flex-col pointer-events-auto">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98, x: 40 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            transition={{ duration: 0.8, cubicBezier: [0.23, 1, 0.32, 1] }}
+            className="flex-1 clinical-panel flex flex-col bg-white/[0.01]"
+          >
+            <div className="p-8 h-full flex flex-col overflow-hidden">
+               <div className="flex items-center justify-between mb-8 border-b border-white/[0.03] pb-6">
+                  <div className="flex items-center gap-4">
+                     <div className="w-1 h-5 bg-accent-primary/40 rounded-full" />
+                     <h2 className="text-[11px] text-white font-black uppercase tracking-[0.4em]">Intelligence_Grid</h2>
+                  </div>
+                  <span className="text-[8px] text-accent-primary/60 font-mono font-black italic tracking-widest uppercase">Live_v4.2.1-SYNC</span>
+               </div>
+               <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                 <AlertFeed />
+               </div>
+            </div>
+          </motion.div>
+        </aside>
       </div>
 
-      {/* Live Threat Feed Overlay */}
-      <aside className="relative z-10 w-[420px] ml-auto mr-8 my-8 glass-card rounded-3xl overflow-hidden flex flex-col pointer-events-auto shadow-2xl">
-        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-accent-primary/40 to-transparent opacity-50"></div>
-        <div className="p-6 flex-1 overflow-hidden flex flex-col">
-          <AlertFeed />
-        </div>
-      </aside>
+      {/* STRATEGIC DIAGNOSTIC CORE (BOTTOM) */}
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 w-full max-w-5xl px-8 pointer-events-none">
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4, cubicBezier: [0.23, 1, 0.32, 1] }}
+          className="glass-card px-10 py-4 rounded-full flex items-center justify-between gap-12 border border-white/[0.05] bg-black/40 backdrop-blur-3xl shadow-2xl"
+        >
+          <div className="flex items-center gap-8">
+            <div className="h-1 w-32 bg-white/[0.03] rounded-full overflow-hidden border border-white/[0.05] relative">
+               <motion.div 
+                 animate={{ x: ['-100%', '100%'] }} 
+                 transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
+                 className="h-full w-24 bg-gradient-to-r from-transparent via-accent-primary/40 to-transparent"
+               />
+            </div>
+            <span className="text-[9px] text-slate-500 font-mono font-black uppercase tracking-[0.3em] italic">Neural_Link: Stable</span>
+          </div>
+          
+          <div className="flex gap-16">
+            <div className="flex items-center gap-4">
+              <span className="text-[9px] text-slate-600 font-black uppercase tracking-[0.2em] italic font-mono">Intercepts</span>
+              <span className="text-2xl font-outfit font-black text-danger-primary italic leading-none">{liveThreats.filter(t => t.risk_level > 80).length}</span>
+            </div>
+            <div className="flex items-center gap-4 border-l border-white/[0.05] pl-16">
+              <span className="text-[9px] text-slate-600 font-black uppercase tracking-[0.2em] italic font-mono">Confidence</span>
+              <span className="text-2xl font-outfit font-black text-accent-primary italic leading-none">99.8%</span>
+            </div>
+            <div className="flex items-center gap-4 border-l border-white/[0.05] pl-16">
+              <span className="text-[9px] text-slate-600 font-black uppercase tracking-[0.2em] italic font-mono">Posture</span>
+              <span className="text-2xl font-outfit font-black text-accent-primary italic leading-none uppercase tracking-tighter">Hard</span>
+            </div>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }

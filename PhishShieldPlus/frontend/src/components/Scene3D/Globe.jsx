@@ -62,7 +62,7 @@ export default function Globe({ threats = [] }) {
   
   useFrame((state, delta) => {
     if (globeRef.current) {
-      globeRef.current.rotation.y += delta * 0.08;
+      globeRef.current.rotation.y += delta * 0.05; // Unified rotation speed
     }
   });
 
@@ -89,22 +89,23 @@ export default function Globe({ threats = [] }) {
   return (
     <group ref={globeRef}>
       {/* Core globe */}
-      <Sphere args={[2, 48, 48]}>
+      <Sphere args={[2, 64, 64]}>
         <meshStandardMaterial 
-          color="#0a1628" 
-          emissive="#050d18"
-          roughness={0.8}
-          metalness={0.9}
+          color="#0b111a" 
+          emissive="#0a192f"
+          emissiveIntensity={0.5}
+          roughness={0.4}
+          metalness={0.8}
         />
       </Sphere>
 
-      {/* Wireframe overlay */}
-      <Sphere args={[2.01, 48, 48]}>
+      {/* Grid overlay */}
+      <Sphere args={[2.02, 64, 64]}>
         <meshBasicMaterial 
-          color="#1a3a6a" 
+          color="#3af0e0" 
           wireframe 
           transparent
-          opacity={0.25}
+          opacity={0.08}
         />
       </Sphere>
 
