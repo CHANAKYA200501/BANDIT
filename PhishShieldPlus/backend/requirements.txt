@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+python-socketio
+celery
+redis
+psycopg2-binary
+SQLAlchemy
+pydantic
+requests
+python-dotenv
+web3
+langdetect
+deep-translator
+spacy
+scikit-learn
+google-generativeai
