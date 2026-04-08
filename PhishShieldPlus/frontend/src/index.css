@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+
 :root {
   --accent-primary: #66fcf1;
   --accent-secondary: #45a29e;
@@ -9,8 +11,6 @@
   --sidebar-width: 80px;
   --sidebar-expanded: 260px;
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
